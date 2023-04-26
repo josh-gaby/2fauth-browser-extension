@@ -1,0 +1,64 @@
+app-accounts {
+
+  header .left, header .right {
+    flex: 1;
+    display: flex;
+    min-width: min-content;
+  }
+
+  header .left+.center {
+    padding-left: 0;
+  }
+
+  header .center {
+    width: 100%;
+    justify-content: flex-start;
+    position: relative;
+    display: flex;
+  }
+
+  header .center.is-title {
+    font-size: 2rem;
+  }
+
+  header .center+.right {
+    margin-left: -10px;
+  }
+  header .right {
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  display: flex;
+
+  .tfa-list {
+    margin-top: 5px;
+    .tfa-container {
+      flex-direction: row;
+      align-items: center;
+      display: flex;
+      justify-content: left;
+      border-bottom: 1px solid #7a7a7a;
+      padding-bottom: 0.9rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      text-align: center;
+      display: inline-block;
+      cursor: pointer;
+
+      .tfa-top {
+        font-size: 2rem;
+        vertical-align: middle;
+        img {
+          max-width: 100%;
+          height: 1.75rem;
+          margin-right: 0.75rem;
+          width: 1.75rem;
+          vertical-align: middle;
+        }
+      }
+
+    }
+  }
+}

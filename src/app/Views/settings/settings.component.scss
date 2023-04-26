@@ -1,0 +1,28 @@
+app-settings {
+  main {
+    padding: 5px;
+    .container {
+      padding: 5px;
+      background: #dbdbdb;
+      text-decoration: none;
+      border-radius: 6px;
+      label {
+        font-size: 12px;
+        display: block;
+        width: 100%;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      textarea {
+        min-height: 200px;
+        resize: vertical;
+      }
+    }
+  }
+}
+
+:root[data-theme=dark] app-settings main .container {
+  background-color: #363636;
+  border-color: #4a4a4a;
+  color: #fff;
+}

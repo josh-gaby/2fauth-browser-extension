@@ -1,0 +1,20 @@
+<main>
+  <div class="tfa-container tfa-cell tfa-text">
+    <img *ngIf="account?.icon" src="https://2fa.jamdown.co.nz/storage/icons/{{account?.icon}}" />
+    <div class="tfa-top">
+      <span class="tfa-service">{{account?.service}}</span>
+    </div>
+    <div class="tfa-bottom has-grey-text">
+      <span class="tfa-account">{{account?.account}}</span>
+    </div>
+    <div class="tfa-password">{{otp?.password}}</div>
+    <ul class="tfa-dots">
+      <li class="dot" *ngFor="let i of [].constructor(10)"></li>
+    </ul>
+    <div class="tfa-close">
+      <button class="button is-rounded is-dark" routerLink="/accounts">
+        Close
+      </button>
+    </div>
+  </div>
+</main>

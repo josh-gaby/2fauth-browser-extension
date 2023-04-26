@@ -1,0 +1,68 @@
+app-otpdisplayer {
+  .tfa-container {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    img {
+      max-width: 100%;
+      height: 4rem;
+      width: 4rem;
+      vertical-align: middle;
+    }
+
+    .tfa-top {
+      font-size: 1.8rem;
+      vertical-align: middle;
+    }
+
+    .tfa-password {
+      font-size: 3rem!important;
+      height: 4rem;
+    }
+
+    .tfa-dots {
+      list-style: none;
+      padding: 0;
+
+      li {
+        display: inline-block;
+        margin: 0 5px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: hsl(348, 100%, 61%);
+      }
+
+      li:nth-child(-n+9) {
+        background: hsl(48, 100%, 67%);
+      }
+
+      li:nth-child(-n+6) {
+        background: hsl(141, 71%, 48%);
+      }
+    }
+
+    .tfa-dots.loading li, li[data-is-active]~li {
+      background: #7a7a7a !important;
+    }
+
+    .tfa-close {
+      left: 0;
+      position: fixed;
+      text-align: center;
+      top: calc(100% - 8rem);
+      width: 100%;
+    }
+  }
+}
+
+:root[data-theme=dark] app-otpdisplayer .tfa-dots li[data-is-active]~li,
+:root[data-theme=dark] app-otpdisplayer .tfa-dots.loading li, {
+  background: #121212 !important;
+}

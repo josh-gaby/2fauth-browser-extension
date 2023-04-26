@@ -1,0 +1,10 @@
+
+{
+  "name": "2FAuth",
+  "version": "1.0",
+  "description": "@FAuth extension",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "index.html"
+  }
+}

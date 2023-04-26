@@ -1,0 +1,25 @@
+<header style="width: 100%;">
+  <div class="left"></div>
+  <div class="center is-title">
+    2FAuth
+  </div>
+  <div class="right">
+    <button type="button" routerLink="/settings">
+      <fa-icon [icon]="faGear"></fa-icon>
+      Settings
+    </button>
+  </div>
+</header>
+<main>
+  <div class="tfa-list">
+    <div *ngFor="let account of accounts" class="tfa-container tfa-cell tfa-text" routerLink="/accounts/{{account.id}}" [state]="{data: account}">
+      <div class="tfa-top">
+        <img *ngIf="account.icon" src="https://2fa.jamdown.co.nz/storage/icons/{{account.icon}}" />
+        <span class="tfa-service">{{account.service}}</span>
+      </div>
+      <div class="tfa-bottom has-grey-text">
+        <span class="tfa-account">{{account.account}}</span>
+      </div>
+    </div>
+  </div>
+</main>
