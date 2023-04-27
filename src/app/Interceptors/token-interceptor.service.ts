@@ -2,16 +2,15 @@ import { Injectable } from '@angular/core';
 import { catchError } from 'rxjs/operators';
 import { Observable, throwError } from 'rxjs';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
+import {SettingsService} from "../Services/settings/settings.service";
 
 @Injectable({
   providedIn: 'root',
 })
 export class TokenInterceptorService implements HttpInterceptor {
-  intercept(
-    request: HttpRequest<any>,
-    next: HttpHandler
-  ): Observable<HttpEvent<any>> {
-    let pat = localStorage.getItem('pat');
+  constructor(private settings: SettingsService) {}
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    let pat = this.settings.get('host_pat');
     if (pat) {
       request = request.clone({
         setHeaders: {
