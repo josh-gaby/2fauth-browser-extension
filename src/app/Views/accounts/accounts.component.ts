@@ -1,6 +1,6 @@
 import {Component, ViewEncapsulation} from '@angular/core';
 import {ServerService} from "../../Services/server/server.service";
-import {Account} from "../../account";
+import {Account} from "../../Models/account";
 import {AppRoutingModule} from "../../app-routing.module";
 import {Router} from "@angular/router";
 import {faGear} from "@fortawesome/free-solid-svg-icons/faGear";
@@ -14,10 +14,12 @@ import {faGear} from "@fortawesome/free-solid-svg-icons/faGear";
 export class AccountsComponent {
   faGear = faGear;
   accounts: Account[] = [];
+  public icon_url: string = '';
 
   constructor(private serverService: ServerService, private router: Router) {}
 
   ngOnInit(): void {
+    this.icon_url = (localStorage.getItem('host_url') || '') + '/storage/icons/';
     this.getAccounts();
   }
 
