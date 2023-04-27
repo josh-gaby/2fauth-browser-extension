@@ -7,12 +7,18 @@
     <div class="tfa-bottom has-grey-text">
       <span class="tfa-account">{{account?.account}}</span>
     </div>
-    <div class="tfa-password">{{formatted_password}}</div>
-    <ul class="tfa-dots">
+    <div class="tfa-password" *ngIf="formatted_password!==''" (click)="copyOTP(true)" (keyup.enter)="copyOTP(true)">{{formatted_password}}</div>
+    <div class="tfa-loading" *ngIf="formatted_password==''">
+      <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>
+    </div>
+    <ul class="tfa-dots" [hidden]="!isTimeBased(otp_type)">
       <li class="dot" *ngFor="let i of [].constructor(10)"></li>
     </ul>
+    <ul class="tfa-counter" [hidden]="!isHMacBased(otp_type)">
+      <li>counter: {{ counter }}</li>
+    </ul>
     <div class="tfa-close">
-      <button class="button is-rounded" routerLink="/accounts">
+      <button class="button is-rounded is-dark" routerLink="/accounts">
         Close
       </button>
     </div>

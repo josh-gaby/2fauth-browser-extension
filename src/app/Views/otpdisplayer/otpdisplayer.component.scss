@@ -21,9 +21,13 @@ app-otpdisplayer {
       vertical-align: middle;
     }
 
-    .tfa-password {
+    .tfa-loading, .tfa-password {
       font-size: 3rem!important;
       height: 4rem;
+    }
+
+    .tfa-password {
+      cursor: pointer;
     }
 
     .tfa-dots {
@@ -52,6 +56,11 @@ app-otpdisplayer {
       background: #7a7a7a !important;
     }
 
+    .tfa-counter {
+      list-style: none;
+      padding: 0;
+    }
+
     .tfa-close {
       left: 0;
       position: fixed;
@@ -62,7 +71,8 @@ app-otpdisplayer {
   }
 }
 
-body[data-theme=dark] app-otpdisplayer .tfa-dots li[data-is-active]~li,
-body[data-theme=dark] app-otpdisplayer .tfa-dots.loading li, {
-  background: #121212 !important;
+body[data-theme=dark] app-otpdisplayer {
+  .tfa-dots li[data-is-active]~li, .tfa-dots.loading li {
+    background: #121212 !important;
+  }
 }

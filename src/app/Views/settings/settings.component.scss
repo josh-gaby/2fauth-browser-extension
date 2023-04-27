@@ -10,23 +10,34 @@ app-settings {
       background: #dbdbdb;
       text-decoration: none;
       border-radius: 6px;
-      label {
-        font-size: 12px;
-        display: block;
-        width: 100%;
-        margin-bottom: 5px;
-        font-weight: bold;
-      }
       textarea {
         min-height: 200px;
         resize: vertical;
       }
     }
-    .buttons {
-      align-items: center;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-start;
+    .theme-container {
+      width: 100%;
+      .buttons {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        button {
+          &:not(:last-of-type) {
+            margin-right: 5px;
+          }
+          fa-icon {
+            margin-right: 5px;
+          }
+        }
+      }
+    }
+    label {
+      font-size: 12px;
+      display: block;
+      width: 100%;
+      margin-bottom: 5px;
+      font-weight: bold;
     }
   }
 }

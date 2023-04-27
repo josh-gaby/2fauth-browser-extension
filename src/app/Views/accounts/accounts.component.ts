@@ -6,6 +6,8 @@ import {Router} from "@angular/router";
 import {faGear} from "@fortawesome/free-solid-svg-icons/faGear";
 import {PreferencesService} from "../../Services/preferences/preferences.service";
 import {SettingsService} from "../../Services/settings/settings.service";
+import {faSpinner} from "@fortawesome/free-solid-svg-icons/faSpinner";
+import {count} from "rxjs";
 
 @Component({
   selector: 'app-accounts',
@@ -17,6 +19,7 @@ export class AccountsComponent {
   public faGear = faGear;
   public accounts: Account[] = [];
   public icon_url: string;
+  protected readonly faSpinner = faSpinner;
 
   constructor(private serverService: ServerService, private router: Router, public preferences: PreferencesService, public settings: SettingsService) {
     this.icon_url = this.settings.get('host_url') + '/storage/icons/';

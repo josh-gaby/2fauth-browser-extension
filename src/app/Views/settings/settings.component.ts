@@ -1,6 +1,6 @@
 import {Component, ElementRef, Renderer2, SimpleChanges, ViewEncapsulation} from '@angular/core';
 import {Router} from "@angular/router";
-import {faGear} from "@fortawesome/free-solid-svg-icons/faGear";
+import {faSun, faMoon, faDesktop, faArrowLeftLong} from "@fortawesome/free-solid-svg-icons";
 import {SettingsService} from "../../Services/settings/settings.service";
 import {ThemingService} from "../../Services/theming/theming.service";
 
@@ -14,6 +14,8 @@ export class SettingsComponent {
   public host_url:string;
   public host_pat:string;
   public themes;
+  public current_theme:string;
+  protected readonly faArrowLeftLong = faArrowLeftLong;
 
   constructor(private router: Router,
               public settings: SettingsService,
@@ -22,17 +24,18 @@ export class SettingsComponent {
               private theme: ThemingService) {
     this.host_url = this.settings.get("host_url");
     this.host_pat = this.settings.get("host_pat");
-    let current_theme = this.settings.get('theme');
+    this.current_theme = this.settings.get('theme');
     this.themes = [
-      { text: 'Light', value: 'light', icon: 'sun', selected: current_theme === 'light' },
-      { text: 'Dark', value: 'dark', icon: 'moon', selected: current_theme === 'dark' },
-      { text: 'Auto', value: 'system', icon: 'desktop', selected: current_theme === 'system' },
+      { text: 'Light', value: 'light', icon: faSun },
+      { text: 'Dark', value: 'dark', icon: faMoon },
+      { text: 'Auto', value: 'system', icon: faDesktop },
     ]
   }
 
   setTheme(theme: string): void {
-
+    this.current_theme = theme;
     this.settings.set('theme', theme);
+    this.settings.save();
     this.theme.setTheme(theme);
   }
 
@@ -42,6 +45,4 @@ export class SettingsComponent {
     this.settings.save();
     this.router.navigate(['/accounts']);
   }
-
-  protected readonly faGear = faGear;
 }

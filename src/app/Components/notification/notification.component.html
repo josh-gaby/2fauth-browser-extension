@@ -1,0 +1,9 @@
+<div class="notifications">
+  <div *ngFor="let notification of notification_list" class="notification" [ngClass]="className(notification)">
+    <ng-container *ngTemplateOutlet="notificationTpl;context:{notification:notification}"></ng-container>
+  </div>
+</div>
+
+<ng-template #notificationTpl let-notification="notification">
+  <div class="message">{{notification.message}}</div>
+</ng-template>

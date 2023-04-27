@@ -3,4 +3,5 @@ export interface Otp {
   otp_type: string;
   generated_at: number;
   period: number | null;
+  counter: number | null;
 }

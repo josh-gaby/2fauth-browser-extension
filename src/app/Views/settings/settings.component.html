@@ -1,7 +1,8 @@
 <header>
   <div class="left">
     <button type="button" routerLink="/accounts">
-      cancel
+      <fa-icon [icon]="faArrowLeftLong"></fa-icon>
+      back
     </button>
   </div>
   <div class="center is-title">
@@ -10,6 +11,14 @@
   <div class="right"></div>
 </header>
 <main>
+  <div class="theme-container field">
+    <label class="has-grey-text">Theme</label>
+    <div class="buttons">
+      <button *ngFor="let theme of themes" (click)="setTheme(theme.value)" type="button" class="button is-dark" [ngClass]="{'is-link': current_theme === theme.value}">
+        <fa-icon [icon]="theme.icon"></fa-icon> {{theme.text}}
+      </button>
+    </div>
+  </div>
   <div class="container field">
     <label class="has-grey-text">Host Url</label>
     <input type="text" class="input" placeholder="Enter your host url" id="host_url" [(ngModel)]="this.host_url"/>
@@ -17,11 +26,6 @@
   <div class="container field">
     <label class="has-grey-text">Personal Access Token</label>
     <textarea class="textarea" placeholder="Enter your Personal Access Token" [(ngModel)]="this.host_pat"></textarea>
-  </div>
-  <div class="is-toggle buttons">
-    <button *ngFor="let theme of themes" (click)="setTheme(theme.value)" role="radio" type="button" title="" class="button {{theme.selected ? 'is-link' : ''}}">
-      {{theme.text}}
-    </button>
   </div>
   <div class="field">
     <button class="button is-link" (click)="saveSettings()">Save</button>
