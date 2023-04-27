@@ -45,6 +45,6 @@ export class PreferencesService {
       this.fromServer();
     }
 
-    return JSON.parse(localStorage.getItem('preferences') || '') as Preferences;
+    return JSON.parse(localStorage.getItem('preferences') || '{}') as Preferences;
   }
 }
