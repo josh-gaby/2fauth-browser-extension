@@ -1,36 +1,9 @@
 app-accounts {
-
-  header .left, header .right {
-    flex: 1;
-    display: flex;
-    min-width: min-content;
-  }
-
-  header .left+.center {
-    padding-left: 0;
-  }
-
-  header .center {
-    width: 100%;
-    justify-content: flex-start;
-    position: relative;
-    display: flex;
-  }
-
-  header .center.is-title {
-    font-size: 2rem;
-  }
-
-  header .center+.right {
-    margin-left: -10px;
-  }
-  header .right {
-    justify-content: flex-end;
-    align-items: center;
-  }
-
   display: flex;
-
+  header .center {
+    justify-content: flex-start;
+    padding-left: 15px;
+  }
   .tfa-list {
     margin-top: 5px;
     .tfa-container {

@@ -1,4 +1,8 @@
 app-settings {
+  header .center {
+    justify-content: flex-end;
+    padding-right: 15px;
+  }
   main {
     padding: 5px;
     .container {
@@ -18,10 +22,16 @@ app-settings {
         resize: vertical;
       }
     }
+    .buttons {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
   }
 }
 
-:root[data-theme=dark] app-settings main .container {
+body[data-theme=dark] app-settings main .container {
   background-color: #363636;
   border-color: #4a4a4a;
   color: #fff;

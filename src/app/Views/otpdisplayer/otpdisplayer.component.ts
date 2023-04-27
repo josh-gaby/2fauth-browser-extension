@@ -5,6 +5,8 @@ import {Account} from "../../Models/account";
 import {Router} from "@angular/router";
 import {range} from "rxjs";
 import {Preferences} from "../../Models/preferences";
+import {PreferencesService} from "../../Services/preferences/preferences.service";
+import {SettingsService} from "../../Services/settings/settings.service";
 
 @Component({
   selector: 'app-otpdisplayer', templateUrl: './otpdisplayer.component.html', styleUrls: ['./otpdisplayer.component.scss'], encapsulation: ViewEncapsulation.None
@@ -17,30 +19,29 @@ export class OtpDisplayerComponent {
   private remainingTimeout: any = null;
   private firstDotToNextOneTimeout: any = null;
   private dotToDotInterval: any = null;
-  private preferences: Preferences | null = null;
   public icon_url: string = '';
 
-  constructor(private serverService: ServerService, private router: Router, private element: ElementRef) {
+  constructor(private serverService: ServerService, private router: Router, private element: ElementRef, public preferences: PreferencesService, private settings: SettingsService) {
+    this.account = history.state.data;
+    this.icon_url = this.settings.get('host_url') + '/storage/icons/';
   }
 
   ngOnInit(): void {
-    this.account = history.state.data;
-    this.preferences = JSON.parse(localStorage.getItem('preferences') || '') as Preferences;
     this.element.nativeElement.querySelector('.tfa-dots').classList.add('loading');
-    this.icon_url = (localStorage.getItem('host_url') || '') + '/storage/icons/';
     this.startTotpLoop();
   }
 
   formatPassword(pwd: string): string {
-    if (this.preferences?.formatPassword && pwd.length > 0) {
-      const x = Math.ceil(this.preferences?.formatPasswordBy < 1 ? pwd.length * this.preferences.formatPasswordBy : this.preferences.formatPasswordBy)
+    if (this.preferences.get("formatPassword") && pwd.length > 0) {
+      let format_password_by = this.preferences.get("formatPasswordBy");
+      const x = Math.ceil(format_password_by < 1 ? pwd.length * format_password_by : format_password_by)
       const chunks = pwd.match(new RegExp(`.{1,${x}}`, 'g'));
       if (chunks) {
         pwd = chunks.join(' ')
       }
     }
 
-    return this.preferences?.showOtpAsDot ? pwd.replace(/[0-9]/g, '●') : pwd
+    return this.preferences.get("showOtpAsDot") ? pwd.replace(/[0-9]/g, '●') : pwd
   }
 
   startTotpLoop(): void {

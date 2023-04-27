@@ -62,7 +62,7 @@ app-otpdisplayer {
   }
 }
 
-:root[data-theme=dark] app-otpdisplayer .tfa-dots li[data-is-active]~li,
-:root[data-theme=dark] app-otpdisplayer .tfa-dots.loading li, {
+body[data-theme=dark] app-otpdisplayer .tfa-dots li[data-is-active]~li,
+body[data-theme=dark] app-otpdisplayer .tfa-dots.loading li, {
   background: #121212 !important;
 }

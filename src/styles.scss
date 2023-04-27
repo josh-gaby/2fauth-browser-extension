@@ -39,19 +39,19 @@ input:not([type=checkbox]):not([type=radio]), textarea {
   outline: none;
 }
 
-:root[data-theme=dark] input, textarea {
+body[data-theme=dark] input, textarea {
   color: #ffffff;
 }
 
-.header, .modal-background, .modal-slot, .options-header, :root, footer {
+.header, .modal-background, .modal-slot, .options-header, body, footer {
   background-color: #f5f5f5;
 }
 
-:root[data-theme=dark], :root[data-theme=dark] .header, :root[data-theme=dark] .modal-background, :root[data-theme=dark] .modal-slot, :root[data-theme=dark] .options-header, :root[data-theme=dark] footer {
+body[data-theme=dark], body[data-theme=dark] .header, body[data-theme=dark] .modal-background, body[data-theme=dark] .modal-slot, body[data-theme=dark] .options-header, body[data-theme=dark] footer {
   background-color: #242424;
 }
 
-:root[data-theme=dark] .tfa-text {
+body[data-theme=dark] .tfa-text {
   color: #fff
 }
 
@@ -68,10 +68,10 @@ main::-webkit-scrollbar-thumb {
   background-color: rgba(100,100,100,.2);
 }
 
-:root[data-theme=dark] main::-webkit-scrollbar-thumb:hover {
+body[data-theme=dark] main::-webkit-scrollbar-thumb:hover {
   background-color: #313337
 }
-:root[data-theme=dark] main::-webkit-scrollbar-thumb {
+body[data-theme=dark] main::-webkit-scrollbar-thumb {
   background-color: #313337;
 }
 
@@ -177,6 +177,7 @@ header {
   max-height: 44px;
   display: flex;
   border-bottom: 1px solid #000;
+  width: 100%;
 }
 
 header div>button {
@@ -191,12 +192,37 @@ header div>button {
   cursor: pointer;
 }
 
-:root[data-theme=dark] header div>button:hover, :root[data-theme=dark] header div>button:focus {
+header {
+  width: 100%;
+}
+header .left, header .right {
+  flex: 1;
+  display: flex;
+  min-width: min-content;
+}
+
+header .center {
+  width: 100%;
+  justify-content: center;
+  position: relative;
+  display: flex;
+}
+
+header .center.is-title {
+  font-size: 2rem;
+}
+
+header .right {
+  justify-content: flex-end;
+  align-items: center;
+}
+
+body[data-theme=dark] header div>button:hover, body[data-theme=dark] header div>button:focus {
   background-color: #313337;
   color: #fff;
 }
 
-:root[data-theme=dark] header {
+body[data-theme=dark] header {
   color: #7a7a7a !important;
   button {
     color: #7a7a7a !important;
@@ -243,3 +269,6 @@ nav.tabs {
     }
   }
 }
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

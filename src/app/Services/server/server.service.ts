@@ -5,13 +5,14 @@ import {Otp} from "../../Models/otp";
 import {IPref} from "../../Models/ipref";
 import {Preferences} from "../../Models/preferences";
 import {map, Observable} from "rxjs";
+import {SettingsService} from "../settings/settings.service";
 
 @Injectable({
   providedIn: 'root'
 })
 
 export class ServerService {
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private settings: SettingsService) {
   }
 
   twofaccounts(): Observable<Account[]> {
@@ -40,15 +41,7 @@ export class ServerService {
     }))
   }
 
-  settings() {
-
-  }
-
   getUrl(): string {
-    let url = localStorage.getItem('host_url') || '';
-    if (url !== '') {
-      url += '/api/v1/'
-    }
-    return url;
+    return this.settings.get('host_url') + '/api/v1/';
   }
 }

@@ -1,5 +1,13 @@
-<header style="width: 100%;">
-  <h1 style="text-align: center;">Settings</h1>
+<header>
+  <div class="left">
+    <button type="button" routerLink="/accounts">
+      cancel
+    </button>
+  </div>
+  <div class="center is-title">
+    Settings
+  </div>
+  <div class="right"></div>
 </header>
 <main>
   <div class="container field">
@@ -8,7 +16,12 @@
   </div>
   <div class="container field">
     <label class="has-grey-text">Personal Access Token</label>
-    <textarea class="textarea" placeholder="Enter your Personal Access Token" [(ngModel)]="this.pat"></textarea>
+    <textarea class="textarea" placeholder="Enter your Personal Access Token" [(ngModel)]="this.host_pat"></textarea>
+  </div>
+  <div class="is-toggle buttons">
+    <button *ngFor="let theme of themes" (click)="setTheme(theme.value)" role="radio" type="button" title="" class="button {{theme.selected ? 'is-link' : ''}}">
+      {{theme.text}}
+    </button>
   </div>
   <div class="field">
     <button class="button is-link" (click)="saveSettings()">Save</button>

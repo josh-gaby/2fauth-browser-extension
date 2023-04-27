@@ -10,11 +10,12 @@ import {OtpDisplayerComponent} from './Views/otpdisplayer/otpdisplayer.component
 import {TokenInterceptorService} from "./Interceptors/token-interceptor.service";
 import {FormsModule} from "@angular/forms";
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 
 @NgModule({
   declarations: [AppComponent, SettingsComponent, AccountsComponent, OtpDisplayerComponent],
-  imports: [AppRoutingModule, BrowserModule, HttpClientModule, FormsModule, FontAwesomeModule,],
+  imports: [AppRoutingModule, BrowserModule, HttpClientModule, FormsModule, FontAwesomeModule, BrowserAnimationsModule,],
   providers: [
     {
       provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true,

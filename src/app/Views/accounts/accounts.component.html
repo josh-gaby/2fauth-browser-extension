@@ -1,4 +1,4 @@
-<header style="width: 100%;">
+<header>
   <div class="left"></div>
   <div class="center is-title">
     2FAuth
@@ -14,7 +14,7 @@
   <div class="tfa-list">
     <div *ngFor="let account of accounts" class="tfa-container tfa-cell tfa-text" routerLink="/accounts/{{account.id}}" [state]="{data: account}">
       <div class="tfa-top">
-        <img *ngIf="account.icon" src="{{icon_url}}{{account.icon}}" />
+        <img *ngIf="preferences.get('showAccountsIcons') && account.icon" src="{{icon_url}}{{account.icon}}" />
         <span class="tfa-service">{{account.service}}</span>
       </div>
       <div class="tfa-bottom has-grey-text">

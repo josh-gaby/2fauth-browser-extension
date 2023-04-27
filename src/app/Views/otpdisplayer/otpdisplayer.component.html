@@ -1,6 +1,6 @@
 <main>
   <div class="tfa-container tfa-cell tfa-text">
-    <img *ngIf="account?.icon" src="{{icon_url}}{{account?.icon}}"/>
+    <img *ngIf="preferences.get('showAccountsIcons') && account?.icon" src="{{icon_url}}{{account?.icon}}"/>
     <div class="tfa-top">
       <span class="tfa-service">{{account?.service}}</span>
     </div>
@@ -12,7 +12,7 @@
       <li class="dot" *ngFor="let i of [].constructor(10)"></li>
     </ul>
     <div class="tfa-close">
-      <button class="button is-rounded is-dark" routerLink="/accounts">
+      <button class="button is-rounded" routerLink="/accounts">
         Close
       </button>
     </div>
