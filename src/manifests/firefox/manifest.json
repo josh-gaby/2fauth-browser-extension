@@ -12,5 +12,10 @@
   "version": "1.0",
   "action": {
     "default_popup": "index.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{65f89fab-2a9d-44fb-b8b1-41e9ffaca5bb}"
+    }
   }
 }

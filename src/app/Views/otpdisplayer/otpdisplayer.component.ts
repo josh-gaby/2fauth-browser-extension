@@ -48,24 +48,24 @@ export class OtpDisplayerComponent {
   formatPassword(pwd: string): string {
     if (this.preferences.get("formatPassword") && pwd.length > 0) {
       let format_password_by = this.preferences.get("formatPasswordBy");
-      const x = Math.ceil(format_password_by < 1 ? pwd.length * format_password_by : format_password_by)
-      const chunks = pwd.match(new RegExp(`.{1,${x}}`, 'g'));
+      const x = Math.ceil(format_password_by < 1 ? pwd.length * format_password_by : format_password_by),
+        chunks = pwd.match(new RegExp(`.{1,${x}}`, 'g'));
       if (chunks) {
-        pwd = chunks.join(' ')
+        pwd = chunks.join(' ');
       }
     }
 
-    return this.preferences.get("showOtpAsDot") ? pwd.replace(/[0-9]/g, '●') : pwd
+    return this.preferences.get("showOtpAsDot") ? pwd.replace(/[0-9]/g, '●') : pwd;
   }
 
   copyOTP(permit_closing: boolean = false) {
     if (this.otp !== null) {
-      const success = this.clipboard.copy(this.otp.password)
+      const success = this.clipboard.copy(this.otp.password);
       if (success == true) {
         if (this.preferences.get('closeOtpOnCopy') && permit_closing === true) {
           window.close();
         } else {
-          this.notifications.success("Copied to clipboard", 3000)
+          this.notifications.success("Copied to clipboard", 3000);
         }
       }
     }
@@ -77,33 +77,33 @@ export class OtpDisplayerComponent {
         this.otp = otp;
         this.otp_type = otp.otp_type;
         if (this.preferences.get('copyOtpOnDisplay')) {
-          this.copyOTP()
+          this.copyOTP();
         }
         resolve();
       });
     });
   }
 
-  async show(id: number | boolean = false) {
+  show(id: number | boolean = false): void {
     if( id ) {
       this.serverService.otp(this.account?.id).subscribe(otp => {
         this.otp = otp;
         try {
+          if (this.preferences.get('copyOtpOnDisplay')) {
+            this.copyOTP();
+          }
           if(this.isTimeBased(otp.otp_type)) {
-            this.startTotpLoop()
-          }
-          else if(this.isHMacBased(this.otp.otp_type) && this.otp.counter) {
-            this.counter = this.otp.counter
-            this.element.nativeElement.querySelector('.tfa-dots').classList.remove('loading')
+            this.startTotpLoop();
+          } else if(this.isHMacBased(this.otp.otp_type) && this.otp.counter) {
+            this.counter = this.otp.counter;
+            this.element.nativeElement.querySelector('.tfa-dots').classList.remove('loading');
             this.formatted_password = this.formatPassword(this.otp.password);
-          }
-          else {
-            this.notifications.error("Unsupported OTP type.")
+          } else {
+            this.notifications.error("Unsupported OTP type.");
           }
           this.otp_type = otp.otp_type;
-        }
-        catch(error) {
-          this.clearOTP()
+        } catch(error) {
+          this.clearOTP();
         }
       });
     }
@@ -155,7 +155,7 @@ export class OtpDisplayerComponent {
       //                                     dotIndex
 
       // The elapsed time from the start of the period that contains the OTP generated_at timestamp and the OTP generated_at timestamp itself
-      elapsedTimeInCurrentPeriod = generated_at % period
+      elapsedTimeInCurrentPeriod = generated_at % period;
 
       // Switch off all dots
       dots = this.element.nativeElement.querySelector('.tfa-dots')
@@ -164,15 +164,15 @@ export class OtpDisplayerComponent {
       }
 
       // We determine the position of the closest dot next to the generated_at timestamp
-      let relativePosition = (elapsedTimeInCurrentPeriod * 10) / period
-      let dotIndex = (Math.floor(relativePosition) + 1)
+      let relativePosition = (elapsedTimeInCurrentPeriod * 10) / period,
+        dotIndex = (Math.floor(relativePosition) + 1);
 
       // We switch the dot on
       this.lastActiveDot = dots.querySelector('li:nth-child(' + dotIndex + ')');
       this.lastActiveDot.setAttribute('data-is-active', true);
 
       // Main timeout that run until the end of the period
-      remainingTimeBeforeEndOfPeriod = period - elapsedTimeInCurrentPeriod
+      remainingTimeBeforeEndOfPeriod = period - elapsedTimeInCurrentPeriod;
       let self = this; // because of the setInterval/setTimeout closures
 
       this.remainingTimeout = setTimeout(function () {
@@ -183,43 +183,43 @@ export class OtpDisplayerComponent {
 
       // During the remainingTimeout countdown we have to show a next dot every durationBetweenTwoDots seconds
       // except for the first next dot
-      durationBetweenTwoDots = period / 10 // we have 10 dots
-      durationFromFirstToNextDot = (Math.ceil(elapsedTimeInCurrentPeriod / durationBetweenTwoDots) * durationBetweenTwoDots) - elapsedTimeInCurrentPeriod
+      durationBetweenTwoDots = period / 10; // we have 10 dots
+      durationFromFirstToNextDot = (Math.ceil(elapsedTimeInCurrentPeriod / durationBetweenTwoDots) * durationBetweenTwoDots) - elapsedTimeInCurrentPeriod;
 
       this.firstDotToNextOneTimeout = setTimeout(function () {
         if (durationFromFirstToNextDot > 0) {
-          self.activateNextDot()
-          dotIndex += 1
+          self.activateNextDot();
+          dotIndex += 1;
         }
         self.dotToDotInterval = setInterval(function () {
-          self.activateNextDot()
-          dotIndex += 1
-        }, durationBetweenTwoDots * 1000)
-      }, durationFromFirstToNextDot * 1000)
+          self.activateNextDot();
+          dotIndex += 1;
+        }, durationBetweenTwoDots * 1000);
+      }, durationFromFirstToNextDot * 1000);
     }
   }
 
   isTimeBased(otp_type: string): boolean {
-    return (otp_type === 'totp' || otp_type === 'steamtotp')
+    return (otp_type === 'totp' || otp_type === 'steamtotp');
   }
 
   isHMacBased(otp_type: string): boolean {
-    return otp_type === 'hotp'
+    return otp_type === 'hotp';
   }
 
   stopLoop() {
     if (this.isTimeBased(this.otp?.otp_type || '')) {
-      clearTimeout(this.remainingTimeout)
-      clearTimeout(this.firstDotToNextOneTimeout)
-      clearInterval(this.dotToDotInterval)
+      clearTimeout(this.remainingTimeout);
+      clearTimeout(this.firstDotToNextOneTimeout);
+      clearInterval(this.dotToDotInterval);
     }
   }
 
   activateNextDot() {
     if (this.lastActiveDot.nextSibling !== null) {
-      this.lastActiveDot.removeAttribute('data-is-active')
-      this.lastActiveDot.nextSibling.setAttribute('data-is-active', true)
-      this.lastActiveDot = this.lastActiveDot.nextSibling
+      this.lastActiveDot.removeAttribute('data-is-active');
+      this.lastActiveDot.nextSibling.setAttribute('data-is-active', true);
+      this.lastActiveDot = this.lastActiveDot.nextSibling;
     }
   }
 
