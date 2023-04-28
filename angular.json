@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/2fauth-chrome",
+            "outputPath": "dist/2fauth-extension",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -45,8 +45,11 @@
             ]
           },
           "configurations": {
+            "chrome-dist": {
+              "outputPath": "dist/2fauth-chrome"
+            },
             "chrome": {
-              "outputPath": "dist/2fauth-chrome",
+              "outputPath": "build/2fauth-chrome",
               "assets": [
                 "src/favicon.ico",
                 "src/assets",
@@ -57,8 +60,11 @@
                 }
               ],
             },
+            "firefox-dist": {
+              "outputPath": "dist/2fauth-firefox"
+            },
             "firefox": {
-              "outputPath": "dist/2fauth-firefox",
+              "outputPath": "build/2fauth-firefox",
               "assets": [
                 "src/favicon.ico",
                 "src/assets",

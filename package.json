@@ -1,14 +1,14 @@
 {
   "name": "2fauth-chrome",
-  "version": "0.0.0",
+  "version": "2023.4.0",
   "scripts": {
     "ng": "ng",
     "build:chrome": "ng build -c development,chrome",
     "build:firefox": "ng build -c development,firefox",
     "build": "ng build -c development,chrome && ng build -c development,firefox",
-    "dist:chrome": "ng build -c production,chrome",
-    "dist:firefox": "ng build -c production,firefox",
-    "dist": "ng build -c production,chrome && ng build -c production,firefox"
+    "dist:chrome": "ng build -c production,chrome,chrome-dist",
+    "dist:firefox": "ng build -c production,firefox,firefox-dist",
+    "dist": "npm run dist:chrome && npm run dist:firefox"
   },
   "private": true,
   "dependencies": {
