@@ -1,9 +1,12 @@
-
 {
-  "name": "2FAuth",
-  "version": "1.0",
-  "description": "@FAuth extension",
   "manifest_version": 3,
+  "name": "2FAuth",
+  "description": "2FAuth extension",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "version": "1.0",
   "action": {
     "default_popup": "index.html"
   }

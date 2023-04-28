@@ -32,11 +32,14 @@ export class ServerService {
   }
 
   preferences(): Observable<Preferences> {
-    return this.http.get<IPref[]>(`${this.getUrl()}user/preferences`).pipe(map((preferences: IPref[]) => {
+    let url = `${this.getUrl()}user/preferences`;
+    console.log('get preferences from server', url);
+    return this.http.get<IPref[]>(url).pipe(map((preferences: IPref[]) => {
       let _map = <any>{};
       preferences.forEach((pref: IPref) => {
         _map[`${pref.key}`] = pref.value;
       });
+      console.log(_map);
       return _map as Preferences;
     }))
   }

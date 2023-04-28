@@ -1,22 +1,26 @@
-import { Injectable } from '@angular/core';
-import {Preferences} from "../../Models/preferences";
+import {Injectable, NgZone, Optional} from '@angular/core';
+import {Preferences, PreferencesClass} from "../../Models/preferences";
 import {ServerService} from "../server/server.service";
+import {SettingsService} from "../settings/settings.service";
+import {Settings, SettingsClass} from "../../Models/settings";
 
 @Injectable({
   providedIn: 'root'
 })
 export class PreferencesService {
-  private preferences: Preferences;
-  constructor(private serverService: ServerService) {
-    this.preferences = this.load();
+  storeKey = '';
+  config: Preferences;
+  constructor(private zone: NgZone, @Optional() _preferences: PreferencesClass, private serverService: ServerService, private settings: SettingsService) {
+    let defaultPreferences = (_preferences)? _preferences : new PreferencesClass();
+    this.config = defaultPreferences.data;
   }
 
   get(key: keyof Preferences): any {
-    return this.preferences[key]
+    return this.config[key]
   }
 
   getPreferences(): Preferences {
-    return this.preferences;
+    return this.config;
   }
 
   save(): void {
@@ -24,16 +28,15 @@ export class PreferencesService {
   }
 
   store(): void {
-    localStorage.setItem('preferences', JSON.stringify(this.preferences));
+    localStorage.setItem(this.storeKey, JSON.stringify(this.config));
   }
 
   /**
    * Get the preferences from the server and store them
    */
   fromServer(): void {
-    this.serverService.preferences().subscribe(preferences => {
-      this.preferences = preferences;
-      localStorage.setItem('preferences', JSON.stringify(preferences));
+    this.serverService.preferences().subscribe(data => {
+      this.config = data;
     });
   }
 
@@ -41,10 +44,10 @@ export class PreferencesService {
    * Load preferences, if not available locally, retrieve them from the server
    */
   load(): Preferences {
-    if (localStorage.getItem("preferences") === null) {
+    if (!localStorage.getItem(this.storeKey)) {
       this.fromServer();
     }
 
-    return JSON.parse(localStorage.getItem('preferences') || '{}') as Preferences;
+    return JSON.parse(localStorage.getItem(this.storeKey) || '{}') as Preferences;
   }
 }

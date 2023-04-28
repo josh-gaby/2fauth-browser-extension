@@ -12,15 +12,17 @@ import {FormsModule} from "@angular/forms";
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import { NotificationComponent } from './Components/notification/notification.component';
 import { NotificationService } from './Services/notification/notification.service';
+import {SettingsService} from "./Services/settings/settings.service";
+import {SettingsClass} from "./Models/settings";
 
 @NgModule({
   declarations: [AppComponent, SettingsComponent, AccountsComponent, OtpDisplayerComponent, NotificationComponent],
   imports: [AppRoutingModule, BrowserModule, HttpClientModule, FormsModule, FontAwesomeModule,],
   providers: [
-    {
-      provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true,
-    },
-    NotificationService
+    {provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true,},
+    { provide: Window, useValue: window },
+    NotificationService,
+    SettingsService
   ],
   bootstrap: [AppComponent]
 })

@@ -14,19 +14,22 @@ export class AppComponent {
 
   constructor(private router: Router,
               private serverService: ServerService,
-              private preferences: PreferencesService,
               private settings: SettingsService,
+              private preferences: PreferencesService,
               private theme: ThemingService) {
   }
 
   ngOnInit(): void {
-    if (!this.settings.get("host_url") || !this.settings.get("host_pat")) {
-      // Missing the host URL or PAT, display the settings page so that they can be entered
-      this.router.navigate(['/settings']);
-    } else {
-      this.theme.setTheme(this.settings.get('theme'));
-      // Load the current user preferences from the server
-      this.preferences.fromServer();
-    }
+    this.settings.load().then(() => {
+      this.preferences.load();
+      if (!this.settings.get("host_url") || !this.settings.get("host_pat")) {
+        // Missing the host URL or PAT, display the settings page so that they can be entered
+        this.router.navigate(['/settings']);
+      } else {
+        this.theme.setTheme(this.settings.get('theme'));
+        // Load the current user preferences from the server
+        this.preferences.fromServer();
+      }
+    });
   }
 }

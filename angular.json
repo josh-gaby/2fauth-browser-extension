@@ -40,7 +40,8 @@
               }
             },
             "allowedCommonJsDependencies": [
-              "@fortawesome/free-solid-svg-icons"
+              "@fortawesome/free-solid-svg-icons",
+              "webextension-polyfill"
             ]
           },
           "configurations": {
