@@ -56,6 +56,20 @@
                   "glob": "*.json"
                 }
               ],
+            },
+            "firefox": {
+              "outputPath": "dist/2fauth-firefox",
+              "assets": [
+                "src/favicon.ico",
+                "src/assets",
+                {
+                  "input": "src/manifests/firefox/",
+                  "output": "/",
+                  "glob": "*.json"
+                }
+              ]
+            },
+            "production": {
               "budgets": [
                 {
                   "type": "initial",
@@ -70,30 +84,13 @@
               ],
               "outputHashing": "all"
             },
-            "firefox": {
-              "outputPath": "dist/2fauth-firefox",
-              "assets": [
-                "src/favicon.ico",
-                "src/assets",
-                {
-                  "input": "src/manifests/firefox/",
-                  "output": "/",
-                  "glob": "*.json"
-                }
-              ],
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "1mb"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
-                }
-              ],
-              "outputHashing": "all"
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
             }
           },
           "defaultConfiguration": "production"

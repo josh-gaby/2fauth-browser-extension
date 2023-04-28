@@ -3,10 +3,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "build": "ng build",
-    "build-chrome": "ng build -c chrome",
-    "build-ff": "ng build -c firefox",
-    "build-all": "ng build -c chrome && ng build -c firefox"
+    "build:chrome": "ng build -c development,chrome",
+    "build:firefox": "ng build -c development,firefox",
+    "build": "ng build -c development,chrome && ng build -c development,firefox",
+    "dist:chrome": "ng build -c production,chrome",
+    "dist:firefox": "ng build -c production,firefox",
+    "dist": "ng build -c production,chrome && ng build -c production,firefox"
   },
   "private": true,
   "dependencies": {
