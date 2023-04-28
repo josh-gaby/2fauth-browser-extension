@@ -18,13 +18,12 @@ export class SettingsService {
   }
 
   setAll(settings: Object, key = this.storeKey): Promise<boolean> {
-    console.log("Saving: ", settings);
     return new Promise((resolve, reject) => {
-      if (storage !== undefined && storage.local != undefined) {
+      if (storage !== undefined && storage.sync !== undefined) {
         let object = {};
         // @ts-ignore
         object[key] = settings;
-        storage.local.set(object).then(()=> {
+        storage.sync.set(object).then(()=> {
           resolve(true);
         }, error => {
           console.log(error);
@@ -40,14 +39,15 @@ export class SettingsService {
 
   private getBrowser(key: string, defaults = {}) {
     return new Promise((resolve, reject) => {
-      if (storage != undefined && storage.local != undefined) {
+      if (storage !== undefined && storage.sync !== undefined) {
         let object = {};
         // @ts-ignore
         object[key] = defaults;
-        storage.local.get(object).then((data) => {
+        storage.sync.get(object).then((data) => {
           resolve(data[key]);
         }, error => {
           console.log(error);
+          reject();
         });
       } else {
         let object =  (localStorage.getItem(key) === null) ? defaults : JSON.parse(localStorage.getItem(key) || '{}');
@@ -59,8 +59,8 @@ export class SettingsService {
   // clears the storage
   clear(): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      if (storage !== undefined && storage.local != undefined) {
-        storage.local.clear().then(() => {
+      if (storage !== undefined && storage.sync !== undefined) {
+        storage.sync.clear().then(() => {
           resolve(true);
         }, error => {
           console.log(error);
@@ -76,8 +76,8 @@ export class SettingsService {
   // remove a key
   remove(key: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      if (storage !== undefined && storage.local != undefined) {
-        storage.local.remove(key).then(() => {
+      if (storage !== undefined && storage.sync !== undefined) {
+        storage.sync.remove(key).then(() => {
           resolve(true);
         }, error => {
           console.log(error);

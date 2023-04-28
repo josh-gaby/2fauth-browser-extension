@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "build-chrome": "ng build -c chrome",
+    "build-ff": "ng build -c firefox",
+    "build-all": "ng build -c chrome && ng build -c firefox"
   },
   "private": true,
   "dependencies": {

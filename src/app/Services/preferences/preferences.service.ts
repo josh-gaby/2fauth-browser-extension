@@ -13,6 +13,7 @@ export class PreferencesService {
   constructor(private zone: NgZone, @Optional() _preferences: PreferencesClass, private serverService: ServerService, private settings: SettingsService) {
     let defaultPreferences = (_preferences)? _preferences : new PreferencesClass();
     this.config = defaultPreferences.data;
+    this.storeKey = defaultPreferences.storeKey;
   }
 
   get(key: keyof Preferences): any {
@@ -37,6 +38,7 @@ export class PreferencesService {
   fromServer(): void {
     this.serverService.preferences().subscribe(data => {
       this.config = data;
+      this.store();
     });
   }
 

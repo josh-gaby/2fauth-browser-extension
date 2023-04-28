@@ -2,7 +2,9 @@
   "manifest_version": 3,
   "name": "2FAuth",
   "description": "2FAuth extension",
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "host_permissions": [
     "<all_urls>"
   ],

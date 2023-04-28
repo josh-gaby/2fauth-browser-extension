@@ -6,9 +6,7 @@ import {SettingsService} from "../settings/settings.service";
   providedIn: 'root'
 })
 export class ThemingService {
-  constructor(private ref: ApplicationRef, private settings: SettingsService) {
-
-  }
+  constructor(private ref: ApplicationRef, private settings: SettingsService) {}
 
   setSystemTheme(): void {
     // Initially check if dark mode is enabled on system
@@ -28,7 +26,16 @@ export class ThemingService {
     });
   }
 
+  applyPrevious(): void {
+    this.setTheme(this.getLastAppliedTheme());
+  }
+
+  getLastAppliedTheme(): string {
+    return localStorage.getItem('last-theme') || 'system';
+  }
+
   setTheme(theme:string) {
+    localStorage.setItem('last-theme', theme);
     if (theme === 'system') {
       this.setSystemTheme();
     } else {

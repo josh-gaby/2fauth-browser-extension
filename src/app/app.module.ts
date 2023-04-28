@@ -1,4 +1,4 @@
-import {NgModule} from '@angular/core';
+import {APP_INITIALIZER, NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 
@@ -13,16 +13,30 @@ import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import { NotificationComponent } from './Components/notification/notification.component';
 import { NotificationService } from './Services/notification/notification.service';
 import {SettingsService} from "./Services/settings/settings.service";
-import {SettingsClass} from "./Models/settings";
+import {PreferencesService} from "./Services/preferences/preferences.service";
+import {ThemingService} from "./Services/theming/theming.service";
+import {InitializerService} from "./Services/initializer/initializer.service";
+
+/**
+ * Make sure that we have loaded all settings from storage before the app loads
+ *
+ * @param service
+ */
+function initializeApp(service: InitializerService): Function {
+  return () => service.load();
+}
 
 @NgModule({
   declarations: [AppComponent, SettingsComponent, AccountsComponent, OtpDisplayerComponent, NotificationComponent],
   imports: [AppRoutingModule, BrowserModule, HttpClientModule, FormsModule, FontAwesomeModule,],
   providers: [
     {provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true,},
-    { provide: Window, useValue: window },
     NotificationService,
-    SettingsService
+    SettingsService,
+    PreferencesService,
+    ThemingService,
+    InitializerService,
+    { provide: APP_INITIALIZER, useFactory: initializeApp, deps: [InitializerService], multi: true }
   ],
   bootstrap: [AppComponent]
 })
