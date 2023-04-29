@@ -16,6 +16,8 @@ import {SettingsService} from "./Services/settings/settings.service";
 import {PreferencesService} from "./Services/preferences/preferences.service";
 import {ThemingService} from "./Services/theming/theming.service";
 import {InitializerService} from "./Services/initializer/initializer.service";
+import {AccountCacheService} from "./Services/accountcache/accountcache.service";
+import {StorageService} from "./Services/storage/storage.service";
 
 /**
  * Make sure that we have loaded all settings from storage before the app loads
@@ -34,6 +36,8 @@ function initializeApp(service: InitializerService): Function {
     NotificationService,
     SettingsService,
     PreferencesService,
+    AccountCacheService,
+    StorageService,
     ThemingService,
     InitializerService,
     { provide: APP_INITIALIZER, useFactory: initializeApp, deps: [InitializerService], multi: true }

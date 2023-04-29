@@ -1,55 +1,50 @@
 import {Injectable, NgZone, Optional} from '@angular/core';
 import {Preferences, PreferencesClass} from "../../Models/preferences";
 import {ServerService} from "../server/server.service";
-import {SettingsService} from "../settings/settings.service";
-import {Settings, SettingsClass} from "../../Models/settings";
+import {StorageService} from "../storage/storage.service";
 
 @Injectable({
   providedIn: 'root'
 })
-export class PreferencesService {
-  storeKey = '';
-  config: Preferences;
-  constructor(private zone: NgZone, @Optional() _preferences: PreferencesClass, private serverService: ServerService, private settings: SettingsService) {
-    let defaultPreferences = (_preferences)? _preferences : new PreferencesClass();
-    this.config = defaultPreferences.data;
-    this.storeKey = defaultPreferences.storeKey;
-  }
-
-  get(key: keyof Preferences): any {
-    return this.config[key]
-  }
-
-  getPreferences(): Preferences {
-    return this.config;
-  }
-
-  save(): void {
-
-  }
-
-  store(): void {
-    localStorage.setItem(this.storeKey, JSON.stringify(this.config));
+export class PreferencesService extends StorageService {
+  constructor(zone: NgZone, @Optional() _preferences: PreferencesClass, private serverService: ServerService) {
+    super(zone);
+    let defaults = (_preferences)? _preferences : {storeKey: '', data: []};
+    this.data = defaults.data;
+    this.storeKey = defaults.storeKey;
   }
 
   /**
-   * Get the preferences from the server and store them
+   * Get the value of a preference
+   *
+   * @param key
+   * @param default_value
    */
-  fromServer(): void {
-    this.serverService.preferences().subscribe(data => {
-      this.config = data;
-      this.store();
-    });
-  }
-
-  /**
-   * Load preferences, if not available locally, retrieve them from the server
-   */
-  load(): Preferences {
-    if (!localStorage.getItem(this.storeKey)) {
-      this.fromServer();
+  get(key: keyof Preferences, default_value: any = null): any {
+    try {
+      return this.data[key];
+    } catch(e) {
+      console.log(e);
+      return default_value;
     }
+  }
 
-    return JSON.parse(localStorage.getItem(this.storeKey) || '{}') as Preferences;
+  /**
+   * Get the preferences from the server and save them in storage
+   */
+  fromServer(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      this.serverService.preferences().subscribe({
+        next: data => {
+          this.data = data;
+          this.setAll(this.data, this.storeKey);
+          resolve(true);
+        },
+        error: error => {
+          console.log(error);
+          reject(false);
+        }
+      });
+    });
   }
 }

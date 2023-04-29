@@ -13,8 +13,7 @@ export class NotificationComponent {
   notification_list: Notification[] = [];
   private _subscription: Subscription | null = null;
 
-  constructor(private notifications: NotificationService) {
-  }
+  constructor(private notifications: NotificationService) {}
 
   private _addNotification(notification: Notification) {
     this.notification_list.push(notification);
@@ -36,13 +35,9 @@ export class NotificationComponent {
     this.notification_list = this.notification_list.filter(notif => notif.id !== notification.id);
   }
 
-
   className(notification: Notification): string {
-
     let style: string;
-
     switch (notification.type) {
-
       case NotificationType.success:
         style = 'success';
         break;

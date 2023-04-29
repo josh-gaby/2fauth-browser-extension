@@ -1,4 +1,9 @@
-import {Settings} from "./settings";
+import {StorageObject} from "./storageobject";
+
+export interface IPref {
+  key: string;
+  value: number;
+}
 
 export interface Preferences {
   lang: string,
@@ -18,7 +23,7 @@ export interface Preferences {
   formatPassword: boolean,
   formatPasswordBy: number
 }
-export class PreferencesClass {
+export class PreferencesClass implements StorageObject {
   storeKey: string = '2fauth-app-preferences';
   data: Preferences = {
     lang: 'en',

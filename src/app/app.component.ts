@@ -19,14 +19,11 @@ export class AppComponent {
               private theme: ThemingService) {
     if (!this.settings.get("host_url") || !this.settings.get("host_pat")) {
       // Missing the host URL or PAT, display the settings page so that they can be entered
-      this.router.navigate(['/settings']);
+      this.router.navigate(['/settings'], { state: { data: {disable_back: true} } });
     } else {
+      // Load the current user preferences from the server
+      this.preferences.fromServer();
       this.theme.setTheme(this.settings.get('theme'));
     }
-  }
-
-  ngOnInit(): void {
-    // Load the current user preferences from the server
-    this.preferences.fromServer();
   }
 }

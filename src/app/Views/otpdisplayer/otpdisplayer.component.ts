@@ -12,18 +12,21 @@ import {Clipboard} from "@angular/cdk/clipboard";
 import {NotificationService} from "../../Services/notification/notification.service";
 
 @Component({
-  selector: 'app-otpdisplayer', templateUrl: './otpdisplayer.component.html', styleUrls: ['./otpdisplayer.component.scss'], encapsulation: ViewEncapsulation.None
+  selector: 'app-otpdisplayer',
+  templateUrl: './otpdisplayer.component.html',
+  styleUrls: ['./otpdisplayer.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class OtpDisplayerComponent {
-  public otp: Otp | null = null;
-  public formatted_password: string = '';
-  public account: Account | null = null;
   private lastActiveDot: any = null;
   private remainingTimeout: any = null;
   private firstDotToNextOneTimeout: any = null;
   private dotToDotInterval: any = null;
-  public counter: number | null = null;
-  public icon_url: string = '';
+  protected otp: Otp | null = null;
+  protected formatted_password: string = '';
+  protected account: Account | null = null;
+  protected counter: number | null = null;
+  protected icon_url: string = '';
   protected otp_type: string = '';
   protected readonly range = range;
   protected readonly faSpinner = faSpinner;
@@ -36,7 +39,7 @@ export class OtpDisplayerComponent {
               private clipboard: Clipboard,
               protected notifications: NotificationService
   ) {
-    this.account = history.state.data;
+    this.account = history.state.data as Account;
     this.icon_url = this.settings.get('host_url') + '/storage/icons/';
   }
 
@@ -45,19 +48,30 @@ export class OtpDisplayerComponent {
     this.show(this.account?.id);
   }
 
-  formatPassword(pwd: string): string {
-    if (this.preferences.get("formatPassword") && pwd.length > 0) {
+  /**
+   * Format an OTP according to the users preferences
+   * This can be in groups of twos, threes or in split in half
+   *
+   * @param password
+   */
+  formatPassword(password: string): string {
+    if (this.preferences.get("formatPassword") && password.length > 0) {
       let format_password_by = this.preferences.get("formatPasswordBy");
-      const x = Math.ceil(format_password_by < 1 ? pwd.length * format_password_by : format_password_by),
-        chunks = pwd.match(new RegExp(`.{1,${x}}`, 'g'));
+      const x = Math.ceil(format_password_by < 1 ? password.length * format_password_by : format_password_by),
+        chunks = password.match(new RegExp(`.{1,${x}}`, 'g'));
       if (chunks) {
-        pwd = chunks.join(' ');
+        password = chunks.join(' ');
       }
     }
 
-    return this.preferences.get("showOtpAsDot") ? pwd.replace(/[0-9]/g, '●') : pwd;
+    return this.preferences.get("showOtpAsDot") ? password.replace(/[0-9]/g, '●') : password;
   }
 
+  /**
+   * Copy the OTP to the users clipboard.
+   *
+   * @param permit_closing
+   */
   copyOTP(permit_closing: boolean = false) {
     if (this.otp !== null) {
       const success = this.clipboard.copy(this.otp.password);
@@ -71,6 +85,9 @@ export class OtpDisplayerComponent {
     }
   }
 
+  /**
+   * Get an OTP from the server
+   */
   getOTP(): Promise<void> {
     return new Promise<void>(resolve => {
       this.serverService.otp(this.account?.id).subscribe(otp => {
@@ -84,6 +101,11 @@ export class OtpDisplayerComponent {
     });
   }
 
+  /**
+   * Load and display an OTP, includes the starting of the timers
+   *
+   * @param id
+   */
   show(id: number | boolean = false): void {
     if( id ) {
       this.serverService.otp(this.account?.id).subscribe(otp => {
@@ -109,6 +131,9 @@ export class OtpDisplayerComponent {
     }
   }
 
+  /**
+   * Clear all OTP data from the component
+   */
   clearOTP() {
     this.stopLoop()
     this.otp, this.account, this.lastActiveDot, this.remainingTimeout, this.firstDotToNextOneTimeout, this.dotToDotInterval = null;
@@ -121,6 +146,10 @@ export class OtpDisplayerComponent {
     }
   }
 
+  /**
+   * Creates a loop to continuously retrieve a new OTP every tim the valid period ends.
+   * Handle animating the dots.
+   */
   async startTotpLoop(): Promise<void> {
     if (this.otp === null) {
       await this.getOTP();
@@ -199,14 +228,27 @@ export class OtpDisplayerComponent {
     }
   }
 
+  /**
+   * Is the current OTP time based?
+   *
+   * @param otp_type
+   */
   isTimeBased(otp_type: string): boolean {
     return (otp_type === 'totp' || otp_type === 'steamtotp');
   }
 
+  /**
+   * Is the current OTP HMAC based?
+   *
+   * @param otp_type
+   */
   isHMacBased(otp_type: string): boolean {
     return otp_type === 'hotp';
   }
 
+  /**
+   * Stop the loop
+   */
   stopLoop() {
     if (this.isTimeBased(this.otp?.otp_type || '')) {
       clearTimeout(this.remainingTimeout);
@@ -215,16 +257,26 @@ export class OtpDisplayerComponent {
     }
   }
 
+  /**
+   * Add the appropriate attributes to the next dot to activate its color
+   */
   activateNextDot() {
     if (this.lastActiveDot.nextSibling !== null) {
-      this.lastActiveDot.removeAttribute('data-is-active');
-      this.lastActiveDot.nextSibling.setAttribute('data-is-active', true);
-      this.lastActiveDot = this.lastActiveDot.nextSibling;
+      try {
+        this.lastActiveDot.removeAttribute('data-is-active');
+        this.lastActiveDot.nextSibling.setAttribute('data-is-active', true);
+        this.lastActiveDot = this.lastActiveDot.nextSibling;
+      } catch (e) {
+        // Do nothing
+      }
     }
   }
 
+  /**
+   * Clean up before leaving
+   */
   ngOnDestroy(): void {
-    this.stopLoop();
+    this.clearOTP();
     try {
       this.lastActiveDot.removeAttribute('data-is-active');
     } catch (e) {

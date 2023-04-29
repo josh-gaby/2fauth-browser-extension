@@ -2,8 +2,7 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Account} from "../../Models/account";
 import {Otp} from "../../Models/otp";
-import {IPref} from "../../Models/ipref";
-import {Preferences} from "../../Models/preferences";
+import {IPref, Preferences} from "../../Models/preferences";
 import {map, Observable} from "rxjs";
 import {SettingsService} from "../settings/settings.service";
 
@@ -12,8 +11,7 @@ import {SettingsService} from "../settings/settings.service";
 })
 
 export class ServerService {
-  constructor(private http: HttpClient, private settings: SettingsService) {
-  }
+  constructor(private http: HttpClient, private settings: SettingsService) {}
 
   twofaccounts(): Observable<Account[]> {
     return this.http.get<Account[]>(this.getUrl() + 'twofaccounts');
@@ -24,11 +22,11 @@ export class ServerService {
   }
 
   groups() {
-
+    // TODO
   }
 
   icons() {
-
+    // TODO
   }
 
   preferences(): Observable<Preferences> {

@@ -9,6 +9,13 @@ import {SettingsService} from "../Services/settings/settings.service";
 })
 export class TokenInterceptorService implements HttpInterceptor {
   constructor(private settings: SettingsService) {}
+
+  /**
+   * Intercept all HTTP request so we can inject the Authorization header
+   *
+   * @param request
+   * @param next
+   */
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     let pat = this.settings.get('host_pat');
     if (pat) {

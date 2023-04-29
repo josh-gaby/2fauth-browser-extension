@@ -1,6 +1,6 @@
 <header>
   <div class="left">
-    <button type="button" routerLink="/accounts">
+    <button *ngIf="disable_back !== true" type="button" routerLink="/accounts">
       <fa-icon [icon]="faArrowLeftLong"></fa-icon>
       back
     </button>
