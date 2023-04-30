@@ -23,9 +23,9 @@ export interface Preferences {
   formatPassword: boolean,
   formatPasswordBy: number
 }
-export class PreferencesClass implements StorageObject {
-  storeKey: string = '2fauth-app-preferences';
-  data: Preferences = {
+export class PreferencesClass extends StorageObject {
+  override storeKey: string = '2fauth-app-preferences';
+  override data: Preferences = {
     lang: 'en',
     showOtpAsDot: false,
     closeOtpOnCopy: false,

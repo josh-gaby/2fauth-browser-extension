@@ -1,6 +1,6 @@
 import {Injectable, NgZone, Optional} from '@angular/core';
-import {Settings, SettingsClass } from "../../Models/settings";
-import {StorageService} from "../storage/storage.service";
+import {Settings, SettingsClass} from "../../Models/settings";
+import {StorageService, StorageType} from "../storage/storage.service";
 
 @Injectable({
   providedIn: 'root'
@@ -8,10 +8,9 @@ import {StorageService} from "../storage/storage.service";
 export class SettingsService extends StorageService {
 
   constructor(zone: NgZone, @Optional() _settings: SettingsClass) {
-    super(zone)
     let defaults = (_settings)? _settings : new SettingsClass();
-    this.data = defaults.data;
-    this.storeKey = defaults.storeKey;
+    super(zone, defaults);
+    this.setStorageType(StorageType.sync);
   }
 
   /**
@@ -43,6 +42,6 @@ export class SettingsService extends StorageService {
    * Save the current settings to storage
    */
   save(): void {
-    this.setAll(this.data, this.storeKey);
+    this.saveToStorage();
   }
 }

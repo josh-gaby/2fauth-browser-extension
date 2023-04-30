@@ -30,7 +30,7 @@ function initializeApp(service: InitializerService): Function {
 
 @NgModule({
   declarations: [AppComponent, SettingsComponent, AccountsComponent, OtpDisplayerComponent, NotificationComponent],
-  imports: [AppRoutingModule, BrowserModule, HttpClientModule, FormsModule, FontAwesomeModule,],
+  imports: [AppRoutingModule, BrowserModule, HttpClientModule, FormsModule, FontAwesomeModule ],
   providers: [
     {provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true,},
     NotificationService,
@@ -44,5 +44,6 @@ function initializeApp(service: InitializerService): Function {
   ],
   bootstrap: [AppComponent]
 })
+
 export class AppModule {
 }

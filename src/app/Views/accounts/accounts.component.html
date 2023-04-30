@@ -11,7 +11,7 @@
   </div>
 </header>
 <main>
-  <div class="tfa-list" *ngIf="accounts_cache.data.length !== 0">
+  <div class="tfa-list" *ngIf="accounts_cache.data?.length !== 0">
     <div *ngFor="let account of accounts_cache.data" class="tfa-container tfa-cell tfa-text" routerLink="/accounts/{{account.id}}" [state]="{data: account}">
       <div class="tfa-top">
         <img *ngIf="preferences.get('showAccountsIcons') && account.icon" src="{{icon_url}}{{account.icon}}" />
@@ -22,7 +22,7 @@
       </div>
     </div>
   </div>
-  <div class="tfa-loading" *ngIf="accounts_cache.data.length === 0">
+  <div class="tfa-loading" *ngIf="accounts_cache.data?.length === 0">
     <fa-icon class="tfa-text" [icon]="faSpinner" [spin]="true"></fa-icon>
     Loading
   </div>

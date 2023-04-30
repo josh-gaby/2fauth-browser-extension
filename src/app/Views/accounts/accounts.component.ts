@@ -7,7 +7,6 @@ import {faGear} from "@fortawesome/free-solid-svg-icons/faGear";
 import {PreferencesService} from "../../Services/preferences/preferences.service";
 import {SettingsService} from "../../Services/settings/settings.service";
 import {faSpinner} from "@fortawesome/free-solid-svg-icons/faSpinner";
-import {count} from "rxjs";
 import {AccountCacheService} from "../../Services/accountcache/accountcache.service";
 
 @Component({
@@ -16,11 +15,19 @@ import {AccountCacheService} from "../../Services/accountcache/accountcache.serv
   styleUrls: ['./accounts.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
+
 export class AccountsComponent {
   public icon_url: string;
   protected readonly faGear = faGear;
   protected readonly faSpinner = faSpinner;
-  constructor(private serverService: ServerService, private router: Router, public preferences: PreferencesService, public settings: SettingsService, public accounts_cache: AccountCacheService) {
+
+  constructor(private serverService: ServerService,
+              private router: Router,
+              public preferences: PreferencesService,
+              public settings: SettingsService,
+              public accounts_cache: AccountCacheService,
+  ) {
+    this.accounts_cache.update();
     this.icon_url = this.settings.get('host_url') + '/storage/icons/';
   }
 

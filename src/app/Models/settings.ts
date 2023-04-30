@@ -6,9 +6,9 @@ export interface Settings {
   theme: string;
 }
 
-export class SettingsClass implements StorageObject{
-  storeKey: string = '2fauth-app-settings';
-  data: Settings = {
+export class SettingsClass extends StorageObject{
+  override storeKey: string = '2fauth-app-settings';
+  override data: Settings = {
     host_url: '',
     host_pat: '',
     theme: 'system'

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { catchError } from 'rxjs/operators';
-import { Observable, throwError } from 'rxjs';
-import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
+import {catchError} from 'rxjs/operators';
+import {Observable, throwError} from 'rxjs';
+import {HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpResponse} from '@angular/common/http';
 import {SettingsService} from "../Services/settings/settings.service";
 
 @Injectable({
@@ -11,7 +11,7 @@ export class TokenInterceptorService implements HttpInterceptor {
   constructor(private settings: SettingsService) {}
 
   /**
-   * Intercept all HTTP request so we can inject the Authorization header
+   * Intercept all HTTP request so that we can inject the Authorization header and cache images
    *
    * @param request
    * @param next

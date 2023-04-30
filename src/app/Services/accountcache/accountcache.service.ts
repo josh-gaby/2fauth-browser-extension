@@ -4,7 +4,7 @@ import {AccountCacheClass} from "../../Models/accountcache";
 import {Preferences, PreferencesClass} from "../../Models/preferences";
 import {ServerService} from "../server/server.service";
 import {SettingsService} from "../settings/settings.service";
-import {StorageService} from "../storage/storage.service";
+import {StorageService, StorageType} from "../storage/storage.service";
 import {SettingsClass} from "../../Models/settings";
 
 @Injectable({
@@ -12,10 +12,9 @@ import {SettingsClass} from "../../Models/settings";
 })
 export class AccountCacheService extends StorageService {
   constructor(zone: NgZone, @Optional() _accounts: AccountCacheClass, private serverService: ServerService) {
-    super(zone);
-    let defaults = (_accounts)? _accounts : {storeKey: '', data: []};
-    this.data = defaults.data;
-    this.storeKey = defaults.storeKey;
+    let defaults = (_accounts)? _accounts : new AccountCacheClass();
+    super(zone, defaults);
+    this.setStorageType(StorageType.local);
   }
 
   /**
@@ -23,8 +22,12 @@ export class AccountCacheService extends StorageService {
    */
   update(): void {
     this.serverService.twofaccounts().subscribe((accounts: Account[]) => {
-      this.data = accounts;
-      this.setAll(this.data, this.storeKey);
+      // Only update the stored data if the accounts list has changed
+      let equal = this.data.length === accounts.length && this.data.every((o: Account, idx: number) => this.objectsEqual(o, accounts[idx]));
+      if (!equal) {
+        this.data = accounts;
+        this.saveToStorage();
+      }
     });
   }
 }
