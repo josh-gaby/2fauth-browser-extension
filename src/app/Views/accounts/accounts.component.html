@@ -14,7 +14,7 @@
   <div class="tfa-list" *ngIf="accounts_cache.data?.length !== 0">
     <div *ngFor="let account of accounts_cache.data" class="tfa-container tfa-cell tfa-text" routerLink="/accounts/{{account.id}}" [state]="{data: account}">
       <div class="tfa-top">
-        <img *ngIf="preferences.get('showAccountsIcons') && account.icon" src="{{icon_url}}{{account.icon}}" />
+        <img *ngIf="preferences.get('showAccountsIcons') && account.icon" src="{{account.encoded_icon}}" />
         <span class="tfa-service">{{account.service}}</span>
       </div>
       <div class="tfa-bottom has-grey-text">

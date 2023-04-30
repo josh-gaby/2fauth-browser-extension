@@ -36,10 +36,10 @@ export class PreferencesService extends StorageService {
       this.serverService.preferences().subscribe({
         next: (preferences: Preferences) => {
           // Only update the stored data if the preferences have changed
-          let equal = this.objectsEqual(this.data, preferences);
+          let equal = this.deepEqual(this.data, preferences);
           if (!equal) {
             this.data = preferences;
-            this.saveToStorage();
+            this.saveToStorage(preferences);
           }
           resolve(true);
         },

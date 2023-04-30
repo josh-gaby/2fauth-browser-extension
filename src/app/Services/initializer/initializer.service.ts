@@ -19,6 +19,7 @@ export class InitializerService {
         this.accountCache.load();
         // Apply the theme currently stored in the settings since this could have been updated on a different system
         this.theme.setTheme(this.settings.get('theme'));
+        this.preferences.load();
         resolve(true);
       }, () => {
         reject(false);

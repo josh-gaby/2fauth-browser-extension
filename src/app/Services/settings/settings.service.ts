@@ -42,6 +42,6 @@ export class SettingsService extends StorageService {
    * Save the current settings to storage
    */
   save(): void {
-    this.saveToStorage();
+    this.saveToStorage(this.data);
   }
 }

@@ -32,7 +32,7 @@ export class StorageService {
   setStorageType(storeType: StorageType) {
     this.storeType = storeType;
     this.storageArea = (storage !== undefined && storage[storeType as keyof Static] !== undefined)
-      ? (storeType === 'sync' ? storage.sync : (storeType === 'managed' ? storage.managed : (storeType === 'local' ? storage.local : undefined)))
+      ? (storeType === StorageType.sync ? storage.sync : (storeType === StorageType.managed ? storage.managed : (storeType === StorageType.local ? storage.local : undefined)))
       : undefined;
   }
 
@@ -40,15 +40,11 @@ export class StorageService {
    * Store to browser
    *
    * @param data
-   * @param key
    */
-  saveToStorage(): Promise<boolean> {
+  saveToStorage(data: any): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.storageArea !== undefined) {
-        let object = {};
-        // @ts-ignore
-        object[this.storeKey] = this.data;
-        this.storageArea.set(object).then(()=> {
+        this.storageArea.set({[this.storeKey]: data}).then(() => {
           resolve(true);
         }, error => {
           console.log(error);
@@ -57,11 +53,11 @@ export class StorageService {
       } else {
         if  (this.storeType !== StorageType.sessionStorage) {
           // Put the object into localStorage
-          localStorage.setItem(this.storeKey, JSON.stringify(this.data));
+          localStorage.setItem(this.storeKey, JSON.stringify(data));
           resolve(true);
         } else {
           // Put the object into sessionStorage
-          sessionStorage.setItem(this.storeKey, JSON.stringify(this.data));
+          sessionStorage.setItem(this.storeKey, JSON.stringify(data));
           resolve(true);
         }
       }
@@ -71,18 +67,15 @@ export class StorageService {
   /**
    * Load from browser
    *
-   * @param key
    * @param defaults
    * @private
    */
-  private loadFromStorage(key: string, defaults = {}) {
+  private loadFromStorage(defaults = []) {
     return new Promise((resolve, reject) => {
       if (this.storageArea !== undefined) {
-        let object = {};
-        // @ts-ignore
-        object[key] = defaults;
-        this.storageArea.get(object).then((data) => {
-          resolve(data[key]);
+        this.storageArea.get({[this.storeKey]: defaults}).then((data) => {
+          console.log(`Loaded data from ${this.storeType}`, data);
+          resolve(data[this.storeKey]);
         }, error => {
           console.log(error);
           reject();
@@ -90,11 +83,11 @@ export class StorageService {
       } else {
         if (this.storeType !== StorageType.sessionStorage) {
           // Get from localStorage
-          let object =  (localStorage.getItem(key) === null) ? defaults : JSON.parse(localStorage.getItem(key) || '{}');
+          let object =  (localStorage.getItem(this.storeKey) === null) ? defaults : JSON.parse(localStorage.getItem(this.storeKey) || '[]');
           resolve(object);
         } else {
           // Get from sessionStorage
-          let object =  (sessionStorage.getItem(key) === null) ? defaults : JSON.parse(sessionStorage.getItem(key) || '{}');
+          let object =  (sessionStorage.getItem(this.storeKey) === null) ? defaults : JSON.parse(sessionStorage.getItem(this.storeKey) || '[]');
           resolve(object);
         }
       }
@@ -108,17 +101,12 @@ export class StorageService {
    * @param o2
    * @protected
    */
-  protected objectsEqual(o1: any, o2: any): boolean {
-    try {
-      if (o2 === null && o1 !== null) return false;
-      return o1 !== null && typeof o1 === 'object' && Object.keys(o1).length > 0 ?
-        Object.keys(o1).length === Object.keys(o2).length &&
-        Object.keys(o1).every(p => this.objectsEqual(o1[p], o2[p]))
-        : (o1 !== null && Array.isArray(o1) && Array.isArray(o2) && !o1.length &&
-          !o2.length) ? true : o1 === o2;
-    } catch (e) {
-      return false;
-    }
+  deepEqual(x: any, y: any): boolean {
+    const ok = Object.keys, tx = typeof x, ty = typeof y;
+    return x && y && tx === 'object' && tx === ty ? (
+      ok(x).length === ok(y).length &&
+      ok(x).every(key => this.deepEqual(x[key], y[key]))
+    ) : (x === y);
   }
 
   /**
@@ -176,7 +164,8 @@ export class StorageService {
    */
   load(): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      this.loadFromStorage(this.storeKey, this.data).then((data: any) => {
+      this.loadFromStorage().then((data: any) => {
+        console.log("Loaded data: ", data);
         this.data = data;
         resolve(true);
       }, () => {

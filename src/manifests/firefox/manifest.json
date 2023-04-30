@@ -4,7 +4,8 @@
   "description": "2FAuth extension",
   "permissions": [
     "storage",
-    "clipboardWrite"
+    "clipboardWrite",
+    "unlimitedStorage"
   ],
   "host_permissions": [
     "<all_urls>"
