@@ -67,13 +67,12 @@ export class StorageService {
   /**
    * Load from browser
    *
-   * @param defaults
    * @private
    */
-  private loadFromStorage(defaults = []) {
+  private loadFromStorage() {
     return new Promise((resolve, reject) => {
       if (this.storageArea !== undefined) {
-        this.storageArea.get({[this.storeKey]: defaults}).then((data) => {
+        this.storageArea.get({[this.storeKey]: this.data}).then((data) => {
           console.log(`Loaded data from ${this.storeType}`, data);
           resolve(data[this.storeKey]);
         }, error => {
@@ -83,11 +82,11 @@ export class StorageService {
       } else {
         if (this.storeType !== StorageType.sessionStorage) {
           // Get from localStorage
-          let object =  (localStorage.getItem(this.storeKey) === null) ? defaults : JSON.parse(localStorage.getItem(this.storeKey) || '[]');
+          let object =  (localStorage.getItem(this.storeKey) === null) ? this.data : JSON.parse(localStorage.getItem(this.storeKey) || '[]');
           resolve(object);
         } else {
           // Get from sessionStorage
-          let object =  (sessionStorage.getItem(this.storeKey) === null) ? defaults : JSON.parse(sessionStorage.getItem(this.storeKey) || '[]');
+          let object =  (sessionStorage.getItem(this.storeKey) === null) ? this.data : JSON.parse(sessionStorage.getItem(this.storeKey) || '[]');
           resolve(object);
         }
       }
@@ -165,9 +164,12 @@ export class StorageService {
   load(): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.loadFromStorage().then((data: any) => {
-        console.log("Loaded data: ", data);
-        this.data = data;
-        resolve(true);
+        if (typeof this.data === typeof data) {
+          this.data = data;
+          resolve(true);
+        } else {
+          resolve(false);
+        }
       }, () => {
         resolve(false);
       })

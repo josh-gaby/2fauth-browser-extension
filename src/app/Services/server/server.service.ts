@@ -3,7 +3,7 @@ import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Account} from "../../Models/account";
 import {Otp} from "../../Models/otp";
 import {IPref, Preferences} from "../../Models/preferences";
-import {forkJoin, map, Observable, of, switchMap} from "rxjs";
+import {forkJoin, from, map, Observable, of, switchMap} from "rxjs";
 import {SettingsService} from "../settings/settings.service";
 
 @Injectable({
@@ -18,7 +18,8 @@ export class ServerService {
       switchMap(accounts => {
         let blobStateObservables = accounts.map(account => {
           if (account.icon !== null) {
-            return this.http.get(this.settings.get('host_url') + '/storage/icons/' + account.icon, {responseType: "blob"}).pipe(
+
+            return from(fetch(this.settings.get('host_url') + '/storage/icons/' + account.icon, {mode: 'no-cors'}).then((response: Response) => response.blob())).pipe(
               map((blob: Blob) => {
                 account.encoded_icon = blob;
                 return account;
