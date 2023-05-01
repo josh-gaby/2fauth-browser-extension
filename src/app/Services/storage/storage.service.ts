@@ -1,7 +1,6 @@
 import {Injectable, NgZone, Optional} from '@angular/core';
 import {Storage, storage} from "webextension-polyfill";
 import {StorageObject} from "../../Models/storageobject";
-import Static = Storage.Static;
 
 export enum StorageType {
   local = 'local',
@@ -15,9 +14,9 @@ export enum StorageType {
   providedIn: 'root'
 })
 export class StorageService {
-  storeKey: string = '';
-  data: any = [];
-  storeType: StorageType = StorageType.local;
+  public data: any = [];
+  protected storeKey: string = '';
+  protected storeType: StorageType = StorageType.local;
   protected storageArea: Storage.StorageAreaSync | Storage.StorageArea | undefined = undefined;
   constructor(private zone: NgZone, defaults: StorageObject) {
     this.data = defaults.data;
@@ -29,9 +28,9 @@ export class StorageService {
    *
    * @param storeType
    */
-  setStorageType(storeType: StorageType) {
+  protected setStorageType(storeType: StorageType) {
     this.storeType = storeType;
-    this.storageArea = (storage !== undefined && storage[storeType as keyof Static] !== undefined)
+    this.storageArea = (storage !== undefined && storage[storeType as keyof Storage.Static] !== undefined)
       ? (storeType === StorageType.sync ? storage.sync : (storeType === StorageType.managed ? storage.managed : (storeType === StorageType.local ? storage.local : undefined)))
       : undefined;
   }
@@ -41,13 +40,13 @@ export class StorageService {
    *
    * @param data
    */
-  saveToStorage(data: any): Promise<boolean> {
+  protected saveToStorage(data: any): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.storageArea !== undefined) {
         this.storageArea.set({[this.storeKey]: data}).then(() => {
           resolve(true);
         }, error => {
-          console.log(error);
+          console.error(error);
           reject(false);
         });
       } else {
@@ -73,10 +72,9 @@ export class StorageService {
     return new Promise((resolve, reject) => {
       if (this.storageArea !== undefined) {
         this.storageArea.get({[this.storeKey]: this.data}).then((data) => {
-          console.log(`Loaded data from ${this.storeType}`, data);
           resolve(data[this.storeKey]);
         }, error => {
-          console.log(error);
+          console.error(error);
           reject();
         });
       } else {
@@ -100,7 +98,7 @@ export class StorageService {
    * @param o2
    * @protected
    */
-  deepEqual(x: any, y: any): boolean {
+  protected deepEqual(x: any, y: any): boolean {
     const ok = Object.keys, tx = typeof x, ty = typeof y;
     return x && y && tx === 'object' && tx === ty ? (
       ok(x).length === ok(y).length &&
@@ -111,13 +109,13 @@ export class StorageService {
   /**
    * Clear the storage
    */
-  clear(): Promise<boolean> {
+   public clear(): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.storageArea !== undefined) {
         this.storageArea.clear().then(() => {
           resolve(true);
         }, error => {
-          console.log(error);
+          console.error(error);
           resolve(false);
         });
       } else {
@@ -137,13 +135,13 @@ export class StorageService {
   /**
    * Remove a key
    */
-  remove(key: string): Promise<boolean> {
+  public remove(key: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.storageArea !== undefined) {
         this.storageArea.remove(key).then(() => {
           resolve(true);
         }, error => {
-          console.log(error);
+          console.error(error);
           resolve(false);
         });
       } else {
@@ -161,7 +159,7 @@ export class StorageService {
   /**
    * Load from storage
    */
-  load(): Promise<boolean> {
+  public load(): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.loadFromStorage().then((data: any) => {
         if (typeof this.data === typeof data) {

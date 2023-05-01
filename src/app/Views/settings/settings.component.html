@@ -25,7 +25,7 @@
   </div>
   <div class="container field">
     <label class="has-grey-text">Personal Access Token</label>
-    <textarea class="textarea" placeholder="Enter your Personal Access Token" [(ngModel)]="this.host_pat"></textarea>
+    <textarea class="textarea" [(ngModel)]="this.new_pat" [placeholder]="(have_pat ? 'Existing Personal Access Token:\n' + starred_pat : 'Enter your Personal Access Token')"></textarea>
   </div>
   <div class="field">
     <button class="button is-link" (click)="saveSettings()">Save</button>

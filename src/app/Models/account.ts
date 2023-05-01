@@ -1,6 +1,5 @@
 export interface Account {
-  encoded_icon: string | Blob | null;
-  test: string | null;
+  icon_src: string | Blob | null;
   id: number;
   group_id: number;
   service: string | null;
@@ -14,8 +13,7 @@ export interface Account {
 }
 
 export class AccountClass implements Account {
-  encoded_icon: string | Blob | null = null;
-  test: string | null = null;
+  icon_src: string | Blob | null = null;
   id: number = -1;
   group_id: number = -1;
   service: string | null = null;

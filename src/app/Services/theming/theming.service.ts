@@ -11,7 +11,7 @@ export class ThemingService {
   /**
    * Apply the correct theme according to the detected system preferences.
    */
-  setSystemTheme(): void {
+  private setSystemTheme(): void {
     // Initially check if dark mode is enabled on system
     const darkModeOn = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
 
@@ -32,7 +32,7 @@ export class ThemingService {
   /**
    * Apply the same theme that was applied when the extension was last open.
    */
-  applyPrevious(): void {
+  public applyPrevious(): void {
     this.setTheme(this.getLastAppliedTheme());
   }
 
@@ -40,7 +40,7 @@ export class ThemingService {
    * Retrieve the last applied theme from storage
    * Defaults to 'system' if none has previously been saved
    */
-  getLastAppliedTheme(): string {
+  private getLastAppliedTheme(): string {
     return localStorage.getItem('last-theme') || 'system';
   }
 
@@ -49,7 +49,7 @@ export class ThemingService {
    *
    * @param theme
    */
-  setTheme(theme: string) {
+  public setTheme(theme: string) {
     localStorage.setItem('last-theme', theme);
     if (theme === 'system') {
       this.setSystemTheme();

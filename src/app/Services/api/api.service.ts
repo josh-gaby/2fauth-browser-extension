@@ -10,23 +10,42 @@ import {SettingsService} from "../settings/settings.service";
   providedIn: 'root'
 })
 
-export class ServerService {
+export class ApiService {
+  _invalid_token: boolean = false;
   constructor(private http: HttpClient, private settings: SettingsService) {}
 
-  twofaccounts(): Observable<Account[]> {
+  get invalid_token(): boolean {
+    return this._invalid_token;
+  }
+
+  set invalid_token(value: boolean) {
+    this._invalid_token = value;
+  }
+
+  public getAccounts(): Observable<Account[]> {
+    if (this._invalid_token) {
+      return of([]);
+    }
     return this.http.get<Account[]>(this.getUrl() + 'twofaccounts').pipe(
       switchMap(accounts => {
         let blobStateObservables = accounts.map(account => {
           if (account.icon !== null) {
-
-            return from(fetch(this.settings.get('host_url') + '/storage/icons/' + account.icon, {mode: 'no-cors'}).then((response: Response) => response.blob())).pipe(
+            return from(fetch(this.settings.get('host_url') + '/storage/icons/' + account.icon, {mode: 'no-cors'}).then((response: Response) => {
+              return response.blob();
+            })).pipe(
               map((blob: Blob) => {
-                account.encoded_icon = blob;
+                if (blob.type !== '') {
+                  // Store the blob as a base64 encoded image if possible
+                  account.icon_src = blob;
+                } else {
+                  // Otherwise, store the icons url
+                  account.icon_src = this.settings.get('host_url') + '/storage/icons/' + account.icon;
+                }
                 return account;
               })
             );
           } else {
-            account.encoded_icon = null;
+            account.icon_src = null;
             return of(account);
           }
         });
@@ -34,10 +53,10 @@ export class ServerService {
       }),
       switchMap(accounts => {
         let imageStateObservables = accounts.map(account => {
-          if (account.encoded_icon !== null && typeof account.encoded_icon !== 'string') {
-            return this.blobToBase64(account.encoded_icon).pipe(
+          if (account.icon_src !== null && typeof account.icon_src !== 'string') {
+            return this.blobToBase64(account.icon_src).pipe(
               map((base64: string) => {
-                account.encoded_icon = base64;
+                account.icon_src = base64;
                 return account;
               }));
           } else {
@@ -60,7 +79,10 @@ export class ServerService {
     });
   }
 
-  otp(account_id: any): Observable<Otp> {
+  public getOtp(account_id: any): Observable<Otp> {
+    if (this._invalid_token) {
+      return of({} as Otp);
+    }
     return this.http.get<Otp>(`${this.getUrl()}twofaccounts/${account_id}/otp`);
   }
 
@@ -72,7 +94,10 @@ export class ServerService {
     // TODO
   }
 
-  preferences(): Observable<Preferences> {
+  public getPreferences(): Observable<Preferences> {
+    if (this._invalid_token) {
+      return of({} as Preferences);
+    }
     let url = `${this.getUrl()}user/preferences`;
     return this.http.get<IPref[]>(url).pipe(
       map((preferences: IPref[]) => {
@@ -85,7 +110,7 @@ export class ServerService {
     );
   }
 
-  getUrl(): string {
+  private getUrl(): string {
     return this.settings.get('host_url') + '/api/v1/';
   }
 }

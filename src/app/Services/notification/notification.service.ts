@@ -10,7 +10,7 @@ export class NotificationService {
 
   constructor() { }
 
-  getObservable(): Observable<Notification> {
+  public getObservable(): Observable<Notification> {
     return this._subject.asObservable();
   }
 
@@ -20,7 +20,7 @@ export class NotificationService {
    * @param message
    * @param timeout
    */
-  info(message: string, timeout = 3000) {
+  public info(message: string, timeout = 3000) {
     this._subject.next(new Notification(this._idx++, NotificationType.info, message, timeout));
   }
 
@@ -30,7 +30,7 @@ export class NotificationService {
    * @param message
    * @param timeout
    */
-  success(message: string, timeout = 3000) {
+  public success(message: string, timeout = 3000) {
     this._subject.next(new Notification(this._idx++, NotificationType.success, message, timeout));
   }
 
@@ -40,7 +40,7 @@ export class NotificationService {
    * @param message
    * @param timeout
    */
-  warning(message: string, timeout = 3000) {
+  public warning(message: string, timeout = 3000) {
     this._subject.next(new Notification(this._idx++, NotificationType.warning, message, timeout));
   }
 
@@ -50,7 +50,7 @@ export class NotificationService {
    * @param message
    * @param timeout
    */
-  error(message: string, timeout = 0) {
+  public error(message: string, timeout = 0) {
     this._subject.next(new Notification(this._idx++, NotificationType.error, message, timeout));
   }
 }

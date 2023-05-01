@@ -19,11 +19,11 @@ export class SettingsService extends StorageService {
    * @param key
    * @param default_value
    */
-  get(key: keyof Settings, default_value: any = null): any {
+  public get(key: keyof Settings, default_value: any = null): any {
     try {
       return this.data[key];
     } catch(e) {
-      console.log(e);
+      console.error(e);
       return default_value;
     }
   }
@@ -34,14 +34,14 @@ export class SettingsService extends StorageService {
    * @param key
    * @param value
    */
-  set(key: keyof Settings, value: any): void {
+  public set(key: keyof Settings, value: any): void {
     this.data[key] = value;
   }
 
   /**
    * Save the current settings to storage
    */
-  save(): void {
+  public save(): void {
     this.saveToStorage(this.data);
   }
 }

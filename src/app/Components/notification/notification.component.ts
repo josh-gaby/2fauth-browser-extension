@@ -16,6 +16,9 @@ export class NotificationComponent {
   constructor(private notifications: NotificationService) {}
 
   private _addNotification(notification: Notification) {
+    this.notification_list.forEach((notification: Notification) => {
+      this.close(notification);
+    })
     this.notification_list.push(notification);
 
     if (notification.timeout !== 0) {

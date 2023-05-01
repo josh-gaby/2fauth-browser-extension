@@ -1,6 +1,6 @@
 <main>
   <div class="tfa-container tfa-cell tfa-text">
-    <img *ngIf="preferences.get('showAccountsIcons') && account?.icon" src="{{account?.encoded_icon}}"/>
+    <img *ngIf="preferences.get('showAccountsIcons') && account?.icon" src="{{account?.icon_src}}"/>
     <div class="tfa-top">
       <span class="tfa-service">{{account?.service}}</span>
     </div>

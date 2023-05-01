@@ -1,13 +1,13 @@
 import {Injectable, NgZone, Optional} from '@angular/core';
 import {Preferences, PreferencesClass} from "../../Models/preferences";
-import {ServerService} from "../server/server.service";
+import {ApiService} from "../api/api.service";
 import {StorageService, StorageType} from "../storage/storage.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class PreferencesService extends StorageService {
-  constructor(zone: NgZone, @Optional() _preferences: PreferencesClass, private serverService: ServerService) {
+  constructor(zone: NgZone, @Optional() _preferences: PreferencesClass, private api: ApiService) {
     let defaults = (_preferences)? _preferences : new PreferencesClass();
     super(zone, defaults);
     this.setStorageType(StorageType.local);
@@ -19,11 +19,11 @@ export class PreferencesService extends StorageService {
    * @param key
    * @param default_value
    */
-  get(key: keyof Preferences, default_value: any = null): any {
+  public get(key: keyof Preferences, default_value: any = null): any {
     try {
       return this.data[key];
     } catch(e) {
-      console.log(e);
+      console.error(e);
       return default_value;
     }
   }
@@ -31,9 +31,9 @@ export class PreferencesService extends StorageService {
   /**
    * Get the preferences from the server and save them in storage
    */
-  fromServer(): Promise<boolean> {
+  public updateFromServer(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      this.serverService.preferences().subscribe({
+      this.api.getPreferences().subscribe({
         next: (preferences: Preferences) => {
           // Only update the stored data if the preferences have changed
           let equal = this.deepEqual(this.data, preferences);
@@ -44,7 +44,7 @@ export class PreferencesService extends StorageService {
           resolve(true);
         },
         error: error => {
-          console.log(error);
+          console.error(error);
           reject(false);
         }
       });
