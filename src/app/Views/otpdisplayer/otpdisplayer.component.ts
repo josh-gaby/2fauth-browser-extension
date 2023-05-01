@@ -107,6 +107,7 @@ export class OtpDisplayerComponent {
       this._api.getOtp(this.account?.id).subscribe(otp => {
         this.otp = otp;
         try {
+          this.otp_type = otp.otp_type;
           if (this.preferences.get('copyOtpOnDisplay')) {
             this.copyOTP();
           }
@@ -119,7 +120,6 @@ export class OtpDisplayerComponent {
           } else {
             this.notifications.error("Unsupported OTP type.");
           }
-          this.otp_type = otp.otp_type;
         } catch(error) {
           this.clearOTP();
         }
