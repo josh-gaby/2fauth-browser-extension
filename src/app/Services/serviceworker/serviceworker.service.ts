@@ -1,0 +1,26 @@
+import { Injectable } from '@angular/core';
+import {from, Observable, of, Subject} from "rxjs";
+import {Notification} from "../../Models/notifications";
+import {SwMessage, SwMessageType} from "../../Models/message";
+import {runtime} from "webextension-polyfill";
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ServiceWorkerService {
+  constructor() {}
+
+  async sendMessage(type: SwMessageType, payload: any = null): Promise<SwMessage> {
+    let message = new SwMessage();
+    try {
+      return runtime.sendMessage({ type: type, payload: payload }).then(data => {
+        message.name = type;
+        message.data = data;
+        return new Promise<SwMessage>((resolve, reject) => resolve(message));
+      });
+    } catch (error) {
+      console.error("sendMessageToBackground error: ", error);
+      return new Promise<SwMessage>((resolve, reject) => resolve(message));
+    }
+  }
+}
