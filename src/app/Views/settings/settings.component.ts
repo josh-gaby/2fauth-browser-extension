@@ -1,11 +1,13 @@
-import {Component, ElementRef, ViewEncapsulation} from '@angular/core';
+import {Component, ViewEncapsulation} from '@angular/core';
 import {Router} from "@angular/router";
-import {faSun, faMoon, faDesktop, faArrowLeftLong, IconDefinition} from "@fortawesome/free-solid-svg-icons";
+import {faArrowLeftLong, faDesktop, faMoon, faSun} from "@fortawesome/free-solid-svg-icons";
 import {SettingsService} from "../../Services/settings/settings.service";
 import {ThemingService} from "../../Services/theming/theming.service";
 import {PreferencesService} from "../../Services/preferences/preferences.service";
 import {NotificationService} from "../../Services/notification/notification.service";
 import {ApiService} from "../../Services/api/api.service";
+import {ServiceWorkerService} from "../../Services/serviceworker/serviceworker.service";
+import {SwMessageType} from "../../Models/message";
 
 @Component({
   selector: 'app-settings',
@@ -29,15 +31,16 @@ export class SettingsComponent {
   protected readonly faArrowLeftLong = faArrowLeftLong;
 
   constructor(private router: Router,
-    public settings: SettingsService,
-    private theme: ThemingService,
-    private api: ApiService,
-    private preferences: PreferencesService,
-    private notifier: NotificationService
+              public settings: SettingsService,
+              private theme: ThemingService,
+              private api: ApiService,
+              private preferences: PreferencesService,
+              private notifier: NotificationService,
+              private _sw: ServiceWorkerService
   ) {
     this.disable_back = history.state?.data?.disable_back || false;
     this.host_url = this.settings.get("host_url", "");
-    this.host_pat = this.settings.get("host_pat", "");
+    this.host_pat = this.settings.get("decoded_pat", "");
     this.have_pat = this.host_pat.length > 0;
     this.starred_pat = this.getStarredPat();
     this.current_theme = this.settings.get('theme', "system");
@@ -69,11 +72,21 @@ export class SettingsComponent {
    */
   public saveSettings(): void {
     this.settings.set('host_url', this.host_url);
+    console.log(this.new_pat);
     if (this.new_pat.length > 0) {
       this.api.invalid_token = false;
-      this.settings.set('host_pat', this.new_pat);
+      this.settings.set('decoded_pat', this.new_pat);
+      this._sw.sendMessage(SwMessageType.ENCRYPT_PAT).then(cipher_text => {
+        console.log(cipher_text);
+        if (cipher_text.data.status) {
+          this.settings.set("host_pat", `enc-${cipher_text.data.host_pat}`);
+          this.settings.save();
+        }
+      })
+    } else {
+      this.settings.save();
     }
-    this.settings.save();
+
     // Only try redirect or load preferences if both a PAT and url are available
     if (this.settings.get("host_url") && this.settings.get("host_pat")) {
       // We will try loading preferences

@@ -20,7 +20,7 @@ export class TokenInterceptorService implements HttpInterceptor {
    * @param next
    */
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    let pat = this.settings.get('host_pat');
+    let pat = this.settings.get('decoded_pat');
     if (pat) {
       request = request.clone({
         setHeaders: {

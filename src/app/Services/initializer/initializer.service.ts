@@ -3,12 +3,18 @@ import {SettingsService} from "../settings/settings.service";
 import {ThemingService} from "../theming/theming.service";
 import {PreferencesService} from "../preferences/preferences.service";
 import {AccountCacheService} from "../accountcache/accountcache.service";
+import {ServiceWorkerService} from "../serviceworker/serviceworker.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class InitializerService {
-  constructor(private settings: SettingsService, private preferences: PreferencesService, private accountCache: AccountCacheService, private theme: ThemingService) { }
+  constructor(private settings: SettingsService,
+              private preferences: PreferencesService,
+              private accountCache: AccountCacheService,
+              private theme: ThemingService,
+              private _sw: ServiceWorkerService
+  ) { }
 
   public load(): Promise<any> {
     // Reapply the theme that was last applied on this system

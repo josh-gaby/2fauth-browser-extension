@@ -25,5 +25,8 @@
     "gecko": {
       "id": "{65f89fab-2a9d-44fb-b8b1-41e9ffaca5bb}"
     }
+  },
+  "background": {
+    "scripts": ["service-worker.js"]
   }
 }

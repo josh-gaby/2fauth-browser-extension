@@ -53,6 +53,7 @@
               "assets": [
                 "src/favicon.ico",
                 "src/assets",
+                "src/service-worker.js",
                 {
                   "input": "src/browser-specific/chrome/",
                   "output": "/",
@@ -68,6 +69,7 @@
               "assets": [
                 "src/favicon.ico",
                 "src/assets",
+                "src/service-worker.js",
                 {
                   "input": "src/browser-specific/firefox/",
                   "output": "/",

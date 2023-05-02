@@ -6,6 +6,8 @@ import {ApiService} from "../api/api.service";
 import {SettingsService} from "../settings/settings.service";
 import {StorageService, StorageType} from "../storage/storage.service";
 import {SettingsClass} from "../../Models/settings";
+import {SwMessageType} from "../../Models/message";
+import {ServiceWorkerService} from "../serviceworker/serviceworker.service";
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +15,9 @@ import {SettingsClass} from "../../Models/settings";
 export class AccountCacheService extends StorageService {
   constructor(zone: NgZone,
               @Optional() _accounts: AccountCacheClass,
-              private _api: ApiService) {
+              private _api: ApiService,
+              private _sw: ServiceWorkerService
+  ) {
     let defaults = (_accounts)? _accounts : new AccountCacheClass();
     super(zone, defaults);
     this.setStorageType(StorageType.local);
@@ -31,5 +35,10 @@ export class AccountCacheService extends StorageService {
         this.saveToStorage(accounts);
       }
     });
+  }
+
+  ngOnDestroy() {
+    // Let the background worker know that we are closing
+    this._sw.sendMessage(SwMessageType.EXT_CLOSING)
   }
 }
