@@ -44,8 +44,11 @@ export class SettingsComponent {
   }
 
   private getStarredPat(): string {
-    let length = this.host_pat.length,
-        start_end_length = length > 100 ? 20 : (length > 50 ? 15 : (length > 20 ? 5 : 1));
+    let length = this.host_pat.length;
+    if (length === 0) {
+      return '';
+    }
+    let start_end_length = length > 100 ? 20 : (length > 50 ? 15 : (length > 20 ? 5 : 1));
     return this.host_pat.substring(0, start_end_length) + '*'.repeat(Math.min(350, this.host_pat.length - (start_end_length * 2))) + this.host_pat.substring(this.host_pat.length - start_end_length);
   }
 

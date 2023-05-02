@@ -28,7 +28,7 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
-              "src/manifest.json"
+              "src/manifest.json",
             ],
             "styles": [
               "src/styles.scss"
@@ -54,11 +54,11 @@
                 "src/favicon.ico",
                 "src/assets",
                 {
-                  "input": "src/manifests/chrome/",
+                  "input": "src/browser-specific/chrome/",
                   "output": "/",
-                  "glob": "*.json"
+                  "glob": "**/*"
                 }
-              ],
+              ]
             },
             "firefox-dist": {
               "outputPath": "dist/2fauth-firefox"
@@ -69,9 +69,9 @@
                 "src/favicon.ico",
                 "src/assets",
                 {
-                  "input": "src/manifests/firefox/",
+                  "input": "src/browser-specific/firefox/",
                   "output": "/",
-                  "glob": "*.json"
+                  "glob": "**/*"
                 }
               ]
             },
