@@ -8,6 +8,7 @@ let ext_client,
   _browser = (typeof browser === "undefined") ? chrome : browser,
   _crypto = (typeof window === "undefined") ? crypto : window.crypto,
   enc_details = {
+    default: true,
     salt: null,
     iv: null
   },
@@ -26,7 +27,13 @@ _browser.runtime.onMessage.addListener((message, sender, response) => {
       isLocked().then(data => response(data));
       break;
     case 'SET-ENC-KEY':
-      unlock(message.payload).then(data => response(data));
+      setEncKey(message.payload).then(data => response(data));
+      break;
+    case 'CHANGE-ENC-KEY':
+      changeEncKey(message.payload).then(data => response(data));
+      break;
+    case 'UNLOCK-EXT':
+      unlockExt().then(data => response(data));
       break;
     case 'ENCRYPT-PAT':
       encryptPat(message.payload).then(data => response(data));
@@ -75,7 +82,7 @@ function setLockTimer() {
   }
 }
 
-function getPat(response) {
+function getPat() {
   if (typeof pat !== 'string') {
     return new Promise(resolve => resolve({status: true, pat: decoder.decode(new Uint8Array(pat))}));
   }
@@ -84,34 +91,54 @@ function getPat(response) {
 
 function isLocked() {
   // This is triggered each time the extension loads, so we will use it as a point to load/generate the salt and iv for encryption
-  return _browser.storage.sync.get({[ENC_STORE_KEY]: null}).then(details => {
+  return _browser.storage.sync.get({[ENC_STORE_KEY]: null}).then(
+    details => {
       if (details && details.hasOwnProperty(ENC_STORE_KEY) && details[ENC_STORE_KEY]) {
         enc_details.iv = new Uint8Array(details[ENC_STORE_KEY]['iv']);
         enc_details.salt = new Uint8Array(details[ENC_STORE_KEY]['salt']);
+        enc_details.default = details[ENC_STORE_KEY]['default'] || true;
         return new Promise(resolve => resolve())
       } else {
         enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
         enc_details.salt = _crypto.getRandomValues(new Uint8Array(16));
+        enc_details.default = true;
         // Store the generated salt + iv (the iv is re-generated every time the pat is encrypted)
-        return _browser.storage.sync.set({[ENC_STORE_KEY]: {iv: Array.apply(null, new Uint8Array(enc_details.iv)), salt: Array.apply(null, new Uint8Array(enc_details.salt))}});
+        return _browser.storage.sync.set({
+          [ENC_STORE_KEY]: {
+            iv: Array.apply(null, new Uint8Array(enc_details.iv)),
+            salt: Array.apply(null, new Uint8Array(enc_details.salt)),
+            default: enc_details.default
+          }
+        });
       }
     },
     () => new Promise(resolve => resolve())
   ).then(
-      () => {
-      return _browser.storage.sync.get({[APP_STORE_KEY]: {}}).then(settings => {
-        let return_value = {locked: false};
-        // The extension can only be locked if there is a PAT present in the settings
-        if (settings.hasOwnProperty(APP_STORE_KEY) && settings[APP_STORE_KEY].hasOwnProperty('host_pat')) {
-          return_value.locked = settings[APP_STORE_KEY]['host_pat'].length > 0 && locked === true;
-        }
+    () => {
+      return _browser.storage.sync.get({[APP_STORE_KEY]: {}}).then(
+        settings => {
+          let return_value = {locked: false};
 
-        return return_value;
-      },
-      () => {
-        return {locked: false};
-      });
-  });
+          // The extension can only be locked if there is a PAT present in the settings and the user has set a password
+          if (settings.hasOwnProperty(APP_STORE_KEY) && settings[APP_STORE_KEY].hasOwnProperty('host_pat')) {
+            return_value.locked = settings[APP_STORE_KEY]['host_pat'].length > 0 && locked === true;
+          }
+          // If the user has not set a password and locked is true, unlock the PAT using a null key
+          if (return_value.locked === true && enc_details.default === true) {
+            return unlockExt().then(status => {
+              return_value.locked = false;
+              return return_value;
+            })
+          } else {
+            return return_value;
+          }
+        },
+        () => {
+          return {locked: false};
+        }
+      );
+    }
+  );
 }
 
 function resetExt() {
@@ -127,25 +154,50 @@ function resetExt() {
   return new Promise(resolve => resolve());
 }
 
-function unlock(key) {
+function unlockExt() {
   return _browser.storage.sync.get({[APP_STORE_KEY]: {}}).then(settings => {
     if (!settings || settings.hasOwnProperty(APP_STORE_KEY) == false) {
-      return new Promise(resolve => resolve({status: true}));
+      return {status: true};
     }
     pat = settings[APP_STORE_KEY]['host_pat'] || '';
-    return deriveKey(key || null, enc_details.salt).then(enc_key => {
-      return decryptPat(pat, enc_key).then(clear_text => {
-        if (clear_text !== 'decryption error') {
-          pat = clear_text;
-          return _browser.storage.local.set({[KEY_STORE_KEY]: key}).then(() => {
+    return getEncKey().then(key_to_use => {
+      return deriveKey(key_to_use, enc_details.salt).then(enc_key => {
+        return decryptPat(pat, enc_key).then(clear_text => {
+          if (clear_text !== 'decryption error') {
+            pat = clear_text;
             locked = false;
             return {status: true};
-          });
-        }
-        return new Promise(resolve => resolve({status: false}));
+          }
+          return {status: false};
+        });
       });
     });
   });
+}
+
+function setEncKey(key) {
+  return _browser.storage.local.set({[KEY_STORE_KEY]: key}).then(
+    () => {status: true},
+    () => {status: false}
+  );
+}
+
+function getEncKey() {
+  return _browser.storage.local.get({[KEY_STORE_KEY]: null}).then(
+    key_data => key_data[KEY_STORE_KEY],
+    () => null
+  );
+}
+
+function changeEncKey(key) {
+  // Set a new encryption key and re-encrypt PAT using the new key
+  return this.setEncKey(key).then(response => {
+    if (response.status === true) {
+      return this.encryptPat(pat);
+    } else {
+      return {status: false, host_pat: null};
+    }
+  })
 }
 
 function decryptPat(cipher_text, enc_key) {
@@ -167,9 +219,8 @@ function decryptPat(cipher_text, enc_key) {
             return failed_promise
           }
         },
-        () => {
-        return failed_promise
-      });
+        () => failed_promise
+      );
     } catch (e) {
       return failed_promise
     }
@@ -249,8 +300,4 @@ function setLockType(lock_type) {
   }
 
   return _browser.storage.local.set({'lock-type': lock_type}).then(result => {status: true});
-}
-
-function setEncKey(key) {
-  _browser
 }

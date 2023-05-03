@@ -22,15 +22,25 @@ export class AuthComponent {
   ) {}
 
   unlock() {
-    //if (this.enc_key && this.enc_key.length > 0) {
-      this._sw.sendMessage(SwMessageType.SET_ENC_KEY, this.enc_key || '').then(response => {
-        if (response.data.status == false) {
-          // Invalid password, try again
-          console.log('Failed to log in');
+    if (this.enc_key && this.enc_key.length > 0) {
+      this._sw.sendMessage(SwMessageType.SET_ENC_KEY, this.enc_key).then(response => {
+        if (response.data.status) {
+          this._sw.sendMessage(SwMessageType.UNLOCK).then(response => {
+            if (response.data.status) {
+              this.initializer.initApp();
+            } else {
+              this.handleFailedLogin();
+            }
+          })
         } else {
-          this.initializer.initApp();
+          this.handleFailedLogin();
         }
       });
-    //}
+    }
+  }
+
+  handleFailedLogin() {
+    // Invalid password, try again
+    console.log('Failed to log in');
   }
 }

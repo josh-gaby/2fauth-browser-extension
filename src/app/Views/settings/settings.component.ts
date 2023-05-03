@@ -24,6 +24,7 @@ export class SettingsComponent {
   public have_pat: boolean = false;
   public starred_pat: string = '';
   protected new_pat: string = '';
+  protected new_password: string = '';
   protected themes = [
     { text: 'Light', value: 'light', icon: faSun },
     { text: 'Dark', value: 'dark', icon: faMoon },
@@ -78,32 +79,61 @@ export class SettingsComponent {
    * Save the settings
    */
   public saveSettings(): void {
+    let update_pat = false;
     this.settings.set('host_url', this.host_url);
     if (this.new_pat.length > 0) {
-      this.api.invalid_token = false;
-      this.settings.set('decoded_pat', this.new_pat);
-      this._sw.sendMessage(SwMessageType.ENCRYPT_PAT, this.new_pat).then(cipher_text => {
-        if (cipher_text.data.status) {
-          this.settings.set("host_pat", cipher_text.data.host_pat);
-          this.settings.save();
-        }
-      })
+      update_pat = true;
+
     } else {
       this.settings.save();
     }
 
     // Only try redirect or load preferences if both a PAT and url are available
-    if (this.settings.get("host_url") && this.settings.get("host_pat")) {
+    if (this.settings.get("host_url") && (this.settings.get("host_pat") || (this.new_pat && this.new_pat.length > 0))) {
+      // Store the old PAT so we can restore on failure
+      let old_pat = this.settings.get("host_pat");
+      this.settings.set('decoded_pat', this.new_pat);
       // We will try loading preferences
       this.preferences.updateFromServer().then(() => {
-        // Preferences loaded successfully, redirect to the main accounts page
-        this.router.navigate(['/accounts']);
+        // Preferences loaded successfully, now we can save the token
+        this.api.invalid_token = false;
+        if (update_pat) {
+          this.updatePat().then(status => {
+            if (status) {
+              // Token has been saved, redirect to the main accounts page
+              this.router.navigate(['/accounts']);
+            } else {
+              this.notifier.error("Failed to save your PAT", 3000);
+            }
+          })
+        }
       },
       () => {
+        this.settings.set('decoded_pat', old_pat);
         // Failed to load preferences, let the user know and stay on the settings page
         this.notifier.error("Couldn't connect to the specified server", 3000);
       });
     }
+  }
+
+  private updatePassword() {
+    return this._sw.sendMessage(SwMessageType.CHANGE_ENC_KEY, this.new_password);
+  }
+
+  /**
+   * Update the stored Personal Access Token
+   *
+   * @private
+   */
+  private updatePat() {
+    return this._sw.sendMessage(SwMessageType.ENCRYPT_PAT, this.new_pat).then(cipher_text => {
+      if (cipher_text.data.status) {
+        this.settings.set("host_pat", cipher_text.data.host_pat);
+        return this.settings.save().then(() => true, () => false);
+      }
+
+      return false;
+    })
   }
 
   public clearStorage() {
