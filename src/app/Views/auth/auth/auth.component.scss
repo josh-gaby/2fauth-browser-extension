@@ -1,0 +1,28 @@
+app-auth {
+  header .center {
+    justify-content: flex-start;
+    padding-left: 15px;
+  }
+  main {
+    padding: 5px;
+    .container {
+      padding: 5px;
+      background: #dbdbdb;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+    label {
+      font-size: 12px;
+      display: block;
+      width: 100%;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+  }
+}
+
+body[data-theme=dark] app-auth main .container {
+  background-color: #363636;
+  border-color: #4a4a4a;
+  color: #fff;
+}

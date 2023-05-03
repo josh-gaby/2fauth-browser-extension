@@ -1,12 +1,16 @@
 import {ApplicationRef, Injectable} from '@angular/core';
 import {BehaviorSubject} from "rxjs";
 import {SettingsService} from "../settings/settings.service";
+import {LocalSettingsService} from "../localsettings/localsettings.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class ThemingService {
-  constructor(private ref: ApplicationRef, private settings: SettingsService) {}
+  constructor(private ref: ApplicationRef,
+              private local_settings: LocalSettingsService,
+              private settings: SettingsService
+  ) {}
 
   /**
    * Apply the correct theme according to the detected system preferences.
@@ -22,7 +26,7 @@ export class ThemingService {
 
     // Watch for changes of the preference
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener('change', e => {
-      if (this.settings.get('theme') === 'system') {
+      if (this.local_settings.get('theme') === 'system') {
         const turnOn = e.matches;
         this.setTheme(turnOn ? "dark" : "light");
       }

@@ -1,12 +1,19 @@
 <header>
-  <div class="left">
-
-  </div>
+  <div class="left"></div>
   <div class="center is-title">
-    2FAuth
+    Verify Identity
   </div>
-  <div class="right"></div>
+  <div class="right">
+    <button type="button" (click)="unlock()">
+      <fa-icon [icon]="faUnlock"></fa-icon>
+      unlock
+    </button>
+  </div>
 </header>
 <main>
-
+  <div class="container field">
+    <label class="has-grey-text">Password</label>
+    <input type="password" class="input" placeholder="" [(ngModel)]="this.enc_key" (keyup.enter)="unlock()"/>
+  </div>
+  <span class="">Your 2fa is locked. Verify your identity to continue.</span>
 </main>

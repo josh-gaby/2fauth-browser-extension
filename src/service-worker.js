@@ -1,18 +1,23 @@
-const setting_key = '2fauth-app-settings';
+const APP_STORE_KEY= '2fauth-app-settings',
+      KEY_STORE_KEY = '2fauth-enc-key',
+      ENC_STORE_KEY= '2fauth-enc-details',
+      decoder = new TextDecoder(),
+      encoder = new TextEncoder();
+
 let ext_client,
   _browser = (typeof browser === "undefined") ? chrome : browser,
-  pat = '',
-  locked = false,
-  lock_timeout = 1
   _crypto = (typeof window === "undefined") ? crypto : window.crypto,
   enc_details = {
     salt: null,
     iv: null
-  };
+  },
+  locked = true,
+  lock_timeout = null,
+  lock_timer_running = false,
+  pat = '';
 
 _browser.runtime.onMessage.addListener((message, sender, response) => {
   const message_type = message.type ? message.type : undefined;
-  console.debug(`Got message: ${message_type}`);
   switch (message_type) {
     case 'GET-PAT':
       getPat().then(data => response(data));
@@ -29,10 +34,9 @@ _browser.runtime.onMessage.addListener((message, sender, response) => {
     case 'SET-LOCK-TYPE':
       setLockType(message.payload).then(data => response(data));
       break;
-    case 'EXT-CLOSING':
-      if (lock_timeout !== 0) {
-        _browser.alarms.create('lock-extension', {periodInMinutes: lock_timeout});
-      }
+    case 'RESET-EXT':
+      resetExt().then(data => response(data));
+      break;
   }
 
   return true;
@@ -40,118 +44,146 @@ _browser.runtime.onMessage.addListener((message, sender, response) => {
 
 _browser.alarms.onAlarm.addListener(alarm => {
   if (alarm.name === 'lock-extension') {
-    console.log("Extension Locked");
-    locked = true;
-    pat = '';
-    _browser.alarms.clear('lock-extension').then(() => {
-      // Clear the encryption key
-      _browser.storage.local.set({'2fauth-enc-key': null});
-    });
+    lockNow();
   }
 });
 
+function lockNow() {
+  locked = true;
+  pat = '';
+  lock_timer_running = false;
+  // Clear the encryption key
+  _browser.storage.local.set({[KEY_STORE_KEY]: null}).then(() => {
+    // Clear the alarm so it doesn't fire again
+    _browser.alarms.clear('lock-extension').then(() => {
+    });
+  })
+}
+
+_browser.runtime.onConnect.addListener(function (externalPort) {
+  externalPort.onDisconnect.addListener(setLockTimer);
+})
+
+function setLockTimer() {
+  if (lock_timeout !== null) {
+    if (lock_timeout > 0 && !locked) {
+      lock_timer_running = true;
+      _browser.alarms.create('lock-extension', {periodInMinutes: lock_timeout});
+    } else if (lock_timeout === 0) {
+      lockNow();
+    }
+  }
+}
+
 function getPat(response) {
+  if (typeof pat !== 'string') {
+    return new Promise(resolve => resolve({status: true, pat: decoder.decode(new Uint8Array(pat))}));
+  }
   return new Promise(resolve => resolve({status: true, pat: pat}));
 }
 
 function isLocked() {
-  // This is triggered each time the extension loads, wo we will use it as a point to load/generate the salt/iv for encryption
-  return _browser.storage.sync.get({'2fauth-enc-details': null}).then(details => {
-    if (details && details.hasOwnProperty('2fauth-enc-details') && details['2fauth-enc-details']) {
-      enc_details.iv = details['2fauth-enc-details']['iv'];
-      enc_details.salt = details['2fauth-enc-details']['salt'];
-      console.log(enc_details);
-      return new Promise(resolve => resolve())
-    } else {
-      enc_details.salt = _crypto.getRandomValues(new Uint8Array(16));
-      return _browser.storage.sync.set({'2fauth-enc-details': {iv: enc_details.iv, salt: enc_details.salt}});
-    }
-  }).then(() => {
-    return _browser.storage.sync.get({[setting_key]: {}}).then(settings => {
-      let return_value = {locked: false};
-      // The extension can only be locked if there is a PAT present in the settings
-      if (settings.hasOwnProperty(setting_key) && settings[setting_key].hasOwnProperty('host_pat')) {
-        return_value.locked = settings[setting_key]['host_pat'].length > 0 && locked === true;
+  // This is triggered each time the extension loads, so we will use it as a point to load/generate the salt and iv for encryption
+  return _browser.storage.sync.get({[ENC_STORE_KEY]: null}).then(details => {
+      if (details && details.hasOwnProperty(ENC_STORE_KEY) && details[ENC_STORE_KEY]) {
+        enc_details.iv = new Uint8Array(details[ENC_STORE_KEY]['iv']);
+        enc_details.salt = new Uint8Array(details[ENC_STORE_KEY]['salt']);
+        return new Promise(resolve => resolve())
+      } else {
+        enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
+        enc_details.salt = _crypto.getRandomValues(new Uint8Array(16));
+        // Store the generated salt + iv (the iv is re-generated every time the pat is encrypted)
+        return _browser.storage.sync.set({[ENC_STORE_KEY]: {iv: Array.apply(null, new Uint8Array(enc_details.iv)), salt: Array.apply(null, new Uint8Array(enc_details.salt))}});
       }
+    },
+    () => new Promise(resolve => resolve())
+  ).then(
+      () => {
+      return _browser.storage.sync.get({[APP_STORE_KEY]: {}}).then(settings => {
+        let return_value = {locked: false};
+        // The extension can only be locked if there is a PAT present in the settings
+        if (settings.hasOwnProperty(APP_STORE_KEY) && settings[APP_STORE_KEY].hasOwnProperty('host_pat')) {
+          return_value.locked = settings[APP_STORE_KEY]['host_pat'].length > 0 && locked === true;
+        }
 
-      return return_value;
-    });
+        return return_value;
+      },
+      () => {
+        return {locked: false};
+      });
   });
 }
 
+function resetExt() {
+  enc_details = {
+    salt: null,
+    iv: null
+  };
+  locked = false;
+  lock_timeout = null;
+  lock_timer_running = false;
+  pat = '';
+
+  return new Promise(resolve => resolve());
+}
+
 function unlock(key) {
-  return _browser.storage.sync.get({[setting_key]: {}}).then(settings => {
-    pat = settings['2fauth-app-settings']['host_pat'] || '';
-    if (pat.length > 4 && pat.substring(0,4, pat) !== 'enc-') {
-      console.debug("Key not encrypted");
+  return _browser.storage.sync.get({[APP_STORE_KEY]: {}}).then(settings => {
+    if (!settings || settings.hasOwnProperty(APP_STORE_KEY) == false) {
       return new Promise(resolve => resolve({status: true}));
     }
-    return deriveKey(key, enc_details.salt).then(enc_key => {
+    pat = settings[APP_STORE_KEY]['host_pat'] || '';
+    return deriveKey(key || null, enc_details.salt).then(enc_key => {
       return decryptPat(pat, enc_key).then(clear_text => {
-        console.log("Unlock results: " + clear_text);
         if (clear_text !== 'decryption error') {
           pat = clear_text;
+          return _browser.storage.local.set({[KEY_STORE_KEY]: key}).then(() => {
+            locked = false;
+            return {status: true};
+          });
         }
-        return _browser.storage.local.set({'2fauth-enc-key': key}).then(() => {
-          return {status: true};
-        });
+        return new Promise(resolve => resolve({status: false}));
       });
     });
   });
 }
 
-function decryptPat(cipher_text) {
-  return _browser.storage.local.get({'2fauth-enc-key': null}).then(details => {
+function decryptPat(cipher_text, enc_key) {
+  const failed_promise = new Promise(resolve => resolve('decryption error'));
+  if (enc_key && cipher_text) {
     try {
-      if (details && details.hasOwnProperty('2fauth-enc-key')) {
-        try {
-          return deriveKey(details['2fauth-enc-key'], enc_details.salt).then(enc_key => {
-            if (enc_key) {
-              try {
-                if (pat.length > 4 && pat.substring(0,4, pat) !== 'enc-') {
-                  console.debug("Key not encrypted");
-                  return new Promise(resolve => resolve(pat));
-                }
-                const encoder = new TextEncoder();
-                console.log(cipher_text, cipher_text.substring(4), encoder.encode(cipher_text.substring(4)), enc_details.iv);
-                return _crypto.subtle.decrypt(
-                  {
-                    name: "AES-GCM",
-                    iv: enc_details.iv
-                  },
-                  enc_key,
-                  encoder.encode(cipher_text.substring(4))
-                ).then(clear_text => {
-                  console.log(clear_text);
-                  let dec = new TextDecoder();
-                  return dec.decode(clear_text);
-                });
-              } catch (e) {
-                console.error(e);
-                // Do nothing
-              }
-            }
-          });
-        } catch (e) {
-          console.error(e);
-          // Do nothing
-        }
-      }
+      return _crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: enc_details.iv
+        },
+        enc_key,
+        new Uint8Array(cipher_text)
+      ).then(
+        decoded_buffer => {
+          try {
+            return decoder.decode(new Uint8Array(decoded_buffer));
+          } catch (e) {
+            return failed_promise
+          }
+        },
+        () => {
+        return failed_promise
+      });
     } catch (e) {
-      console.error(e);
-      // Do nothing
+      return failed_promise
     }
-    return new Promise(resolve => resolve('decryption error'))
-  });
+  }
+
+  return failed_promise
 }
 
 function deriveKey(key, salt) {
   return getKeyMaterial(key).then(key_material => {
-    const enc = new TextEncoder();
     return _crypto.subtle.deriveKey(
       {
         name: "PBKDF2",
-        salt: enc.encode(salt),
+        salt: encoder.encode(salt),
         iterations: 100000,
         hash: "SHA-256"
       },
@@ -167,10 +199,9 @@ function deriveKey(key, salt) {
 }
 
 function getKeyMaterial(key) {
-  const enc = new TextEncoder();
   return _crypto.subtle.importKey(
     "raw",
-    enc.encode(key),
+    encoder.encode(key),
     "PBKDF2",
     false,
     ["deriveBits", "deriveKey"]
@@ -178,30 +209,31 @@ function getKeyMaterial(key) {
 }
 
 function encryptPat(pat) {
-  let enc = new TextEncoder(),
-      clear_text = enc.encode(pat);
-  return _browser.storage.local.get({'2fauth-enc-key': null}).then(details => {
+  return _browser.storage.local.get({[KEY_STORE_KEY]: null}).then(details => {
     try {
-      if (details && details.hasOwnProperty('2fauth-enc-key')) {
-        return deriveKey(details['2fauth-enc-key'], enc_details.salt).then(enc_key => {
+      if (details && details.hasOwnProperty(KEY_STORE_KEY)) {
+        return deriveKey(details[KEY_STORE_KEY], enc_details.salt).then(enc_key => {
           enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
-          return _browser.storage.sync.set({'2fauth-enc-details': {iv: enc_details.iv, salt: enc_details.salt}}).then(() => {
+          return _browser.storage.sync.set({[ENC_STORE_KEY]: {iv: Array.apply(null, new Uint8Array(enc_details.iv)), salt: Array.apply(null, new Uint8Array(enc_details.salt))}}).then(() => {
             return _crypto.subtle.encrypt(
               {
                 name: "AES-GCM",
                 iv: enc_details.iv
               },
               enc_key,
-              clear_text
-            ).then(ciphertext => {
-              const decoder = new TextDecoder();
-              return {status: true, host_pat: decoder.decode(ciphertext)}
-            });
+              encoder.encode(pat).buffer
+            ).then(
+              ciphertext => {
+                return {status: true, host_pat: Array.apply(null, new Uint8Array(ciphertext))}
+              },
+              () => {
+                return {status: false, host_pat: null};
+              }
+            );
           });
         });
       }
     } catch (e) {
-      console.log(e);
       // Do nothing
     }
     return {status: false, host_pat: null};

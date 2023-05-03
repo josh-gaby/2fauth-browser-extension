@@ -27,7 +27,22 @@
     <label class="has-grey-text">Personal Access Token</label>
     <textarea class="textarea" [(ngModel)]="this.new_pat" [placeholder]="(have_pat ? 'Existing Personal Access Token:\n' + starred_pat : 'Enter your Personal Access Token')"></textarea>
   </div>
+  <div class="container field">
+    <label class="has-grey-text">2FAuth timeout</label>
+    <select [(ngModel)]="this.lock_timer">
+      <option value="0">Immediately</option>
+      <option value="1">1 minute</option>
+      <option value="5">5 minutes</option>
+      <option value="15">15 minutes</option>
+      <option value="30">30 minutes</option>
+      <option value="60">1 hour</option>
+      <option value="240">4 hours</option>
+      <option value="-1">On browser restart</option>
+      <option value="null">Never</option>
+    </select>
+  </div>
   <div class="field">
     <button class="button is-link" (click)="saveSettings()">Save</button>
+    <button class="button is-link" (click)="clearStorage()">Clear</button>
   </div>
 </main>

@@ -20,6 +20,7 @@ import {StorageService} from "./Services/storage/storage.service";
 import {ApiService} from "./Services/api/api.service";
 import {ServiceWorkerService} from "./Services/serviceworker/serviceworker.service";
 import { AuthComponent } from './Views/auth/auth/auth.component';
+import {LocalSettingsService} from "./Services/localsettings/localsettings.service";
 
 /**
  * Make sure that we have loaded all settings from storage before the app loads
@@ -39,6 +40,7 @@ function initializeApp(service: InitializerService): Function {
     AccountCacheService,
     ApiService,
     InitializerService,
+    LocalSettingsService,
     NotificationService,
     PreferencesService,
     ServiceWorkerService,

@@ -8,6 +8,9 @@ import {NotificationService} from "../../Services/notification/notification.serv
 import {ApiService} from "../../Services/api/api.service";
 import {ServiceWorkerService} from "../../Services/serviceworker/serviceworker.service";
 import {SwMessageType} from "../../Models/message";
+import {storage} from "webextension-polyfill";
+import {InitCheckService} from "../../Services/initcheck/initcheck.service";
+import {LocalSettingsService} from "../../Services/localsettings/localsettings.service";
 
 @Component({
   selector: 'app-settings',
@@ -27,23 +30,27 @@ export class SettingsComponent {
     { text: 'Auto', value: 'system', icon: faDesktop },
   ];
   protected current_theme: string;
+  protected lock_timer: number | null;
   protected disable_back: boolean = false;
   protected readonly faArrowLeftLong = faArrowLeftLong;
 
-  constructor(private router: Router,
-              public settings: SettingsService,
-              private theme: ThemingService,
+  constructor(private _sw: ServiceWorkerService,
               private api: ApiService,
-              private preferences: PreferencesService,
+              private initializer: InitCheckService,
+              private local_settings: LocalSettingsService,
               private notifier: NotificationService,
-              private _sw: ServiceWorkerService
+              private preferences: PreferencesService,
+              private router: Router,
+              private theme: ThemingService,
+              public settings: SettingsService,
   ) {
     this.disable_back = history.state?.data?.disable_back || false;
     this.host_url = this.settings.get("host_url", "");
     this.host_pat = this.settings.get("decoded_pat", "");
     this.have_pat = this.host_pat.length > 0;
     this.starred_pat = this.getStarredPat();
-    this.current_theme = this.settings.get('theme', "system");
+    this.lock_timer = this.local_settings.get('lock_timeout', null);
+    this.current_theme = this.local_settings.get('theme', "system");
   }
 
   private getStarredPat(): string {
@@ -62,8 +69,8 @@ export class SettingsComponent {
    */
   public setTheme(theme: string): void {
     this.current_theme = theme;
-    this.settings.set('theme', theme);
-    this.settings.save();
+    this.local_settings.set('theme', theme);
+    this.local_settings.save();
     this.theme.setTheme(theme);
   }
 
@@ -72,14 +79,12 @@ export class SettingsComponent {
    */
   public saveSettings(): void {
     this.settings.set('host_url', this.host_url);
-    console.log(this.new_pat);
     if (this.new_pat.length > 0) {
       this.api.invalid_token = false;
       this.settings.set('decoded_pat', this.new_pat);
-      this._sw.sendMessage(SwMessageType.ENCRYPT_PAT).then(cipher_text => {
-        console.log(cipher_text);
+      this._sw.sendMessage(SwMessageType.ENCRYPT_PAT, this.new_pat).then(cipher_text => {
         if (cipher_text.data.status) {
-          this.settings.set("host_pat", `enc-${cipher_text.data.host_pat}`);
+          this.settings.set("host_pat", cipher_text.data.host_pat);
           this.settings.save();
         }
       })
@@ -99,5 +104,16 @@ export class SettingsComponent {
         this.notifier.error("Couldn't connect to the specified server", 3000);
       });
     }
+  }
+
+  public clearStorage() {
+    localStorage.clear();
+    storage.local.clear().then(() => {
+      storage.sync.clear().then(() => {
+        this._sw.sendMessage(SwMessageType.RESET_EXT).then(() => {
+          this.initializer.initApp();
+        });
+      });
+    })
   }
 }
