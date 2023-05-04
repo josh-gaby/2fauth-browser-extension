@@ -3,7 +3,7 @@ import {RouterModule, Routes} from '@angular/router';
 import {SettingsComponent} from "./Views/settings/settings.component";
 import {AccountsComponent} from "./Views/accounts/accounts.component";
 import {OtpDisplayerComponent} from "./Views/otpdisplayer/otpdisplayer.component";
-import {AuthComponent} from "./Views/auth/auth/auth.component";
+import {AuthComponent} from "./Views/auth/auth.component";
 
 const routes: Routes = [
   { path: 'accounts', component: AccountsComponent },

@@ -5,6 +5,8 @@ export interface Settings {
   host_pat: string;
   decoded_pat: string;
   password_set: boolean;
+  lock_timeout: number | null;
+  theme: string;
 }
 
 export class SettingsClass extends StorageObject{
@@ -13,6 +15,8 @@ export class SettingsClass extends StorageObject{
     host_url: '',
     host_pat: '',
     decoded_pat: '',
-    password_set: false
+    password_set: false,
+    lock_timeout: null,
+    theme: 'system'
   };
 }

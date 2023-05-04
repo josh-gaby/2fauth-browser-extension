@@ -9,7 +9,7 @@ import {ServiceWorkerService} from "./Services/serviceworker/serviceworker.servi
 import {Subscription} from "rxjs";
 import {SwMessageType} from "./Models/message";
 import {extension, runtime} from "webextension-polyfill";
-import {InitCheckService} from "./Services/initcheck/initcheck.service";
+import {InitializerService} from "./Services/initializer/initializer.service";
 
 @Component({
   selector: 'app-root', templateUrl: './app.component.html', styleUrls: ['./app.component.scss']
@@ -18,7 +18,7 @@ export class AppComponent {
   title = '2FAuth';
   private _subscription: Subscription | null = null;
 
-  constructor(private initializer: InitCheckService,
+  constructor(private initializer: InitializerService,
               private router: Router,
               private _sw: ServiceWorkerService,
   ) {

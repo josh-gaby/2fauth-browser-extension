@@ -1,9 +1,9 @@
 import {Component, ViewEncapsulation} from '@angular/core';
-import {ServiceWorkerService} from "../../../Services/serviceworker/serviceworker.service";
-import {SwMessageType} from "../../../Models/message";
-import {SettingsService} from "../../../Services/settings/settings.service";
+import {ServiceWorkerService} from "../../Services/serviceworker/serviceworker.service";
+import {SwMessageType} from "../../Models/message";
+import {SettingsService} from "../../Services/settings/settings.service";
 import {Router} from "@angular/router";
-import {InitCheckService} from "../../../Services/initcheck/initcheck.service";
+import {InitializerService} from "../../Services/initializer/initializer.service";
 import {faUnlock} from "@fortawesome/free-solid-svg-icons/faUnlock";
 
 @Component({
@@ -16,7 +16,7 @@ export class AuthComponent {
   public enc_key: string = '';
   protected readonly faUnlock = faUnlock;
   constructor(private _sw: ServiceWorkerService,
-              private initializer: InitCheckService,
+              private initializer: InitializerService,
               private settings: SettingsService,
               private router: Router
   ) {}

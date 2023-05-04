@@ -32,7 +32,7 @@ export class PreferencesService extends StorageService {
    * Get the preferences from the server and save them in storage
    */
   public updateFromServer(): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
+    return new Promise<boolean>(resolve => {
       this.api.getPreferences().subscribe({
         next: (preferences: Preferences) => {
           // Only update the stored data if the preferences have changed
@@ -44,8 +44,7 @@ export class PreferencesService extends StorageService {
           resolve(true);
         },
         error: error => {
-          console.error(error);
-          reject(false);
+          resolve(false);
         }
       });
     });

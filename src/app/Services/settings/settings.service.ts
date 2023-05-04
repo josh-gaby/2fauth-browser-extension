@@ -10,7 +10,7 @@ export class SettingsService extends StorageService {
   constructor(zone: NgZone, @Optional() _settings: SettingsClass) {
     let defaults = (_settings)? _settings : new SettingsClass();
     super(zone, defaults);
-    this.setStorageType(StorageType.sync);
+    this.setStorageType(StorageType.local);
   }
 
   /**
@@ -23,7 +23,6 @@ export class SettingsService extends StorageService {
     try {
       return this.data[key];
     } catch(e) {
-      console.error(e);
       return default_value;
     }
   }
@@ -43,7 +42,7 @@ export class SettingsService extends StorageService {
    */
   public save() {
     let save_data = {...this.data};
-    save_data.decoded_pat = '';
+    delete save_data.decoded_pat;
     return this.saveToStorage(save_data);
   }
 }

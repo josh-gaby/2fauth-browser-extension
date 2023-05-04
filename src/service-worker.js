@@ -104,7 +104,7 @@ function getPat() {
 
 function isLocked() {
   // This is triggered each time the extension loads, so we will use it as a point to load/generate the salt and iv for encryption
-  return _browser.storage.sync.get({[ENC_STORE_KEY]: null}).then(
+  return _browser.storage.local.get({[ENC_STORE_KEY]: null}).then(
     details => {
       if (details && details.hasOwnProperty(ENC_STORE_KEY) && details[ENC_STORE_KEY]) {
         enc_details.iv = new Uint8Array(details[ENC_STORE_KEY]['iv']);
@@ -116,7 +116,7 @@ function isLocked() {
         enc_details.salt = _crypto.getRandomValues(new Uint8Array(16));
         enc_details.default = true;
         // Store the generated salt + iv (the iv is re-generated every time the pat is encrypted)
-        return _browser.storage.sync.set({
+        return _browser.storage.local.set({
           [ENC_STORE_KEY]: {
             iv: Array.apply(null, new Uint8Array(enc_details.iv)),
             salt: Array.apply(null, new Uint8Array(enc_details.salt)),
@@ -128,7 +128,7 @@ function isLocked() {
     () => new Promise(resolve => resolve())
   ).then(
     () => {
-      return _browser.storage.sync.get({[APP_STORE_KEY]: {}}).then(
+      return _browser.storage.local.get({[APP_STORE_KEY]: {}}).then(
         settings => {
           let return_value = {locked: false};
 
@@ -168,7 +168,7 @@ function resetExt() {
 }
 
 function unlockExt() {
-  return _browser.storage.sync.get({[APP_STORE_KEY]: {}}).then(settings => {
+  return _browser.storage.local.get({[APP_STORE_KEY]: {}}).then(settings => {
     if (!settings || settings.hasOwnProperty(APP_STORE_KEY) == false) {
       return {status: true};
     }
@@ -278,7 +278,7 @@ function encryptPat(pat) {
       if (details && details.hasOwnProperty(KEY_STORE_KEY)) {
         return deriveKey(details[KEY_STORE_KEY], enc_details.salt).then(enc_key => {
           enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
-          return _browser.storage.sync.set({[ENC_STORE_KEY]: {iv: Array.apply(null, new Uint8Array(enc_details.iv)), salt: Array.apply(null, new Uint8Array(enc_details.salt))}}).then(() => {
+          return _browser.storage.local.set({[ENC_STORE_KEY]: {iv: Array.apply(null, new Uint8Array(enc_details.iv)), salt: Array.apply(null, new Uint8Array(enc_details.salt))}}).then(() => {
             return _crypto.subtle.encrypt(
               {
                 name: "AES-GCM",
