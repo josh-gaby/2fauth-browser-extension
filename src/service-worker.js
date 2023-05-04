@@ -17,6 +17,19 @@ let ext_client,
   lock_timer_running = false,
   pat = '';
 
+/**
+ * Detect all browser windows closing and lock extension if required
+ *
+ * TODO: Needs testing without dev-tools windows open to see if it still triggers
+ */
+_browser.windows.onRemoved.addListener(window_id => {
+  _browser.windows.getAll().then(window_list => {
+    if (window_list.length === 0 && lock_timeout === -1) {
+      _browser.storage.local.set({[KEY_STORE_KEY]: null});
+    }
+  })
+});
+
 _browser.runtime.onMessage.addListener((message, sender, response) => {
   const message_type = message.type ? message.type : undefined;
   switch (message_type) {
@@ -55,6 +68,10 @@ _browser.alarms.onAlarm.addListener(alarm => {
   }
 });
 
+_browser.runtime.onConnect.addListener(function (externalPort) {
+  externalPort.onDisconnect.addListener(setLockTimer);
+})
+
 function lockNow() {
   locked = true;
   pat = '';
@@ -66,10 +83,6 @@ function lockNow() {
     });
   })
 }
-
-_browser.runtime.onConnect.addListener(function (externalPort) {
-  externalPort.onDisconnect.addListener(setLockTimer);
-})
 
 function setLockTimer() {
   if (lock_timeout !== null) {
