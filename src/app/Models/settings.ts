@@ -4,6 +4,7 @@ export interface Settings {
   host_url: string;
   host_pat: string;
   decoded_pat: string;
+  password_set: boolean;
 }
 
 export class SettingsClass extends StorageObject{
@@ -11,6 +12,7 @@ export class SettingsClass extends StorageObject{
   override data: Settings = {
     host_url: '',
     host_pat: '',
-    decoded_pat: ''
+    decoded_pat: '',
+    password_set: false
   };
 }

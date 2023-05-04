@@ -31,8 +31,10 @@ export class SettingsComponent {
     { text: 'Auto', value: 'system', icon: faDesktop },
   ];
   protected current_theme: string;
-  protected lock_timer: number | null;
+  protected lock_timer: number | string | null;
+  protected original_lock_type: number | null;
   protected disable_back: boolean = false;
+  protected password_set: boolean = false;
   protected readonly faArrowLeftLong = faArrowLeftLong;
 
   constructor(private _sw: ServiceWorkerService,
@@ -48,9 +50,11 @@ export class SettingsComponent {
     this.disable_back = history.state?.data?.disable_back || false;
     this.host_url = this.settings.get("host_url", "");
     this.host_pat = this.settings.get("decoded_pat", "");
+    this.password_set = this.settings.get("password_set", false);
     this.have_pat = this.host_pat.length > 0;
     this.starred_pat = this.getStarredPat();
     this.lock_timer = this.local_settings.get('lock_timeout', null);
+    this.original_lock_type = this.local_settings.get('lock_timeout', null);
     this.current_theme = this.local_settings.get('theme', "system");
   }
 
@@ -125,7 +129,7 @@ export class SettingsComponent {
    *
    * @private
    */
-  private updatePat() {
+  private updatePat(): Promise<boolean> {
     return this._sw.sendMessage(SwMessageType.ENCRYPT_PAT, this.new_pat).then(cipher_text => {
       if (cipher_text.data.status) {
         this.settings.set("host_pat", cipher_text.data.host_pat);
@@ -136,14 +140,29 @@ export class SettingsComponent {
     })
   }
 
-  public clearStorage() {
-    localStorage.clear();
-    storage.local.clear().then(() => {
-      storage.sync.clear().then(() => {
-        this._sw.sendMessage(SwMessageType.RESET_EXT).then(() => {
-          this.initializer.initApp();
-        });
+  private updateLockTimer(): Promise<boolean> {
+    this.lock_timer = this.lock_timer === 'null' ? null : this.lock_timer;
+    if (this.lock_timer !== this.original_lock_type) {
+      return this._sw.sendMessage(SwMessageType.SET_LOCK_TYPE, this.lock_timer).then(status => {
+        return true;
+      })
+    } else {
+      return new Promise((resolve, reject) => {
+        return resolve(false);
       });
-    })
+    }
+  }
+
+  public clearStorage() {
+    if (confirm("Reset extension storage?")) {
+      localStorage.clear();
+      storage.local.clear().then(() => {
+        storage.sync.clear().then(() => {
+          this._sw.sendMessage(SwMessageType.RESET_EXT).then(() => {
+            this.initializer.initApp();
+          });
+        });
+      })
+    }
   }
 }
