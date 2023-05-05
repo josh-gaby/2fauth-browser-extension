@@ -157,7 +157,6 @@ export class SettingsComponent {
         case SettingsError.UPDATE_PASSWORD: // NOSONAR
           this.password_set = false;
         default:
-          console.log(results);
           this.notifier.error("Failed to save settings", 3000);
           break;
       }

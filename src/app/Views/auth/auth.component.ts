@@ -40,7 +40,7 @@ export class AuthComponent {
   }
 
   handleFailedLogin() {
-    // Invalid password, try again
+    // TODO: Handle failed login notification
     console.log('Failed to log in');
   }
 }
