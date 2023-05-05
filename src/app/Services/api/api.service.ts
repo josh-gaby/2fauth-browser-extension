@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse} from '@angular/common/http';
 import {Account} from "../../Models/account";
 import {Otp} from "../../Models/otp";
 import {IPref, Preferences} from "../../Models/preferences";
@@ -92,6 +92,30 @@ export class ApiService {
 
   icons() {
     // TODO
+  }
+
+  /**
+   * Check if the api is accessible using the current settings
+   */
+  public checkAccess(): Promise<boolean> {
+    return new Promise<boolean>(resolve => {
+      if (this._invalid_token) {
+        resolve(false);
+      }
+      let url = `${this.getUrl()}user/preferences`;
+      this.http.get<HttpResponse<any>>(url, {observe: 'response'}).subscribe({
+        next: response => {
+          if (response.status >= 200 && response.status < 400) {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        },
+        error: (e: HttpErrorResponse) => {
+          resolve(false);
+        }
+      });
+    })
   }
 
   public getPreferences(): Observable<Preferences> {

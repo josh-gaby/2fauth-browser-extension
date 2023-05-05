@@ -10,6 +10,7 @@ import {ServiceWorkerService} from "../../Services/serviceworker/serviceworker.s
 import {SwMessageType} from "../../Models/message";
 import {storage} from "webextension-polyfill";
 import {InitializerService} from "../../Services/initializer/initializer.service";
+import {take} from "rxjs";
 
 enum SettingsError {
   SERVER_ACCESS = -1,
@@ -62,7 +63,7 @@ export class SettingsComponent {
     this.starred_pat = this.getStarredPat();
     this.starred_pass = '*'.repeat(this.password_set as number);
     this.lock_timer = this.settings.get('lock_timeout', null);
-    this.lock_timer = this.lock_timer === null ? 'null' : this.lock_timer;
+    //this.lock_timer = this.lock_timer === null ? 'null' : this.lock_timer;
     this.original_lock_timer = this.settings.get('lock_timeout', null);
     this.current_theme = this.settings.get('theme', "system");
   }
@@ -78,7 +79,7 @@ export class SettingsComponent {
       return '';
     }
     let start_end_length = length > 100 ? 20 : (length > 50 ? 15 : (length > 20 ? 5 : 1));
-    return this.host_pat.substring(0, start_end_length) + '*'.repeat(Math.min(350, this.host_pat.length - (start_end_length * 2))) + this.host_pat.substring(this.host_pat.length - start_end_length);
+    return this.host_pat.substring(0, start_end_length) + '*'.repeat(Math.min(280, this.host_pat.length - (start_end_length * 2))) + this.host_pat.substring(this.host_pat.length - start_end_length);
   }
 
   /**
@@ -108,38 +109,30 @@ export class SettingsComponent {
       this.settings.set('decoded_pat', this.new_pat);
     }
 
-    new Promise(resolve => {
-      // Test the provided server details by trying to load the user preferences from the server
-      this.preferences.updateFromServer().then(
-        status => {
-          if (status === true) {
-            this.api.invalid_token = false;
-            resolve(true);
-          }
-          resolve(SettingsError.SERVER_ACCESS);
-        },
-        () => {
-          resolve(SettingsError.SERVER_ACCESS);
-        }
-      )
-    }).then(results => {
+    // Test the provided server details
+    this.api.checkAccess().then(
+      results => {
+        return (results || SettingsError.SERVER_ACCESS)
+      },
+      () => {
+        return SettingsError.SERVER_ACCESS
+      }
+    ).then(
+      results => {
       // Update the password
       if (results === true && update_password) {
-        console.debug('Updating password');
         return this.updatePassword(update_pat);
       }
       return results;
     }).then(results => {
       // Update the PAT
       if (results === true && update_pat) {
-        console.debug('Updating PAT');
         return this.updatePat();
       }
       return results;
     }).then(results => {
       // Update the lock timer
       if (results === true && this.password_set !== false) {
-        console.debug('Updating Lock timer');
         return this.updateLockTimer();
       }
       return results;
@@ -148,7 +141,7 @@ export class SettingsComponent {
         case true:
           this.settings.set('password_set', this.password_set);
           this.settings.save().then(() => {
-            this.initializer.initApp();
+            //this.initializer.initApp();
             // Redirect to the main accounts page
             this.router.navigate(['/accounts']);
           });
@@ -184,11 +177,35 @@ export class SettingsComponent {
     this.password_set = this.new_password.length;
     if (!update_pat) {
       // Update the password and re-encrypt the current PAT using the key
-      return this._sw.sendMessage(SwMessageType.CHANGE_ENC_KEY, this.new_password).then(response => (response.data.status || SettingsError.UPDATE_PASSWORD), () => SettingsError.UPDATE_PASSWORD);
+      return this._sw.sendMessage(SwMessageType.CHANGE_ENC_KEY, this.new_password).then(
+        cipher_text => {
+            if (cipher_text.data.status) {
+              return this.savePat(cipher_text.data.host_pat).then(status => (status || SettingsError.UPDATE_PASSWORD), () => SettingsError.UPDATE_PASSWORD);
+            }
+            return SettingsError.UPDATE_PASSWORD
+        },
+        () => SettingsError.UPDATE_PASSWORD
+      );
     } else {
       // Update the password but don't bother re-encrypting the PAT since we are updating it anyway
-      return this._sw.sendMessage(SwMessageType.SET_ENC_KEY, this.new_password).then(response => (response.data.status || SettingsError.PASSWORD), () => SettingsError.PASSWORD);
+      return this._sw.sendMessage(SwMessageType.SET_ENC_KEY, this.new_password).then(
+        cipher_text => {
+          if (cipher_text.data.status) {
+            return this.savePat(cipher_text.data.host_pat).then(status => (status || SettingsError.PASSWORD), () => SettingsError.PASSWORD);
+          }
+          return SettingsError.PASSWORD
+        },
+        () => SettingsError.PASSWORD
+      );
     }
+  }
+
+  private savePat(new_cipher_text: any) {
+    this.settings.set("host_pat", new_cipher_text);
+    return this.settings.save().then(
+      () => true,
+      () => false
+    );
   }
 
   /**
@@ -199,11 +216,7 @@ export class SettingsComponent {
   private updatePat() {
     return this._sw.sendMessage(SwMessageType.ENCRYPT_PAT, this.new_pat).then(cipher_text => {
       if (cipher_text.data.status) {
-        this.settings.set("host_pat", cipher_text.data.host_pat);
-        return this.settings.save().then(
-          () => true,
-          () => SettingsError.PAT
-        );
+        return this.savePat(cipher_text.data.host_pat).then(status => (status || SettingsError.PAT), () => SettingsError.PAT);
       }
 
       return SettingsError.PAT;
@@ -218,6 +231,7 @@ export class SettingsComponent {
   private updateLockTimer() {
     this.lock_timer = this.lock_timer === 'null' ? null : this.lock_timer as number;
     if (this.lock_timer !== this.original_lock_timer) {
+      this.settings.set('lock_timeout', this.lock_timer);
       return this._sw.sendMessage(SwMessageType.SET_LOCK_TYPE, this.lock_timer).then(
         status => (status.data.status || SettingsError.LOCK_TIMER),
         () => SettingsError.LOCK_TIMER

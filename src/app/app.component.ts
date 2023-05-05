@@ -28,6 +28,7 @@ export class AppComponent {
     // Check if the extension has been locked
     this._sw.sendMessage(SwMessageType.CHECK_LOCKED).then(response => {
       if (response.data.locked === true) {
+        console.log('redirect from app.component');
         // Its locked, redirect to the auth screen
         this.router.navigate(['/auth']);
       } else {

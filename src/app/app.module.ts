@@ -20,6 +20,7 @@ import {StorageService} from "./Services/storage/storage.service";
 import {ApiService} from "./Services/api/api.service";
 import {ServiceWorkerService} from "./Services/serviceworker/serviceworker.service";
 import {AuthComponent} from './Views/auth/auth.component';
+import {LoadingComponent} from './Views/loading/loading.component';
 
 /**
  * Make sure that we have loaded all settings from storage before the app loads
@@ -31,7 +32,7 @@ function initializeApp(service: InitializerService): Function {
 }
 
 @NgModule({
-  declarations: [AppComponent, SettingsComponent, AccountsComponent, OtpDisplayerComponent, NotificationComponent, AuthComponent],
+  declarations: [AppComponent, SettingsComponent, AccountsComponent, OtpDisplayerComponent, NotificationComponent, AuthComponent, LoadingComponent],
   imports: [AppRoutingModule, BrowserModule, HttpClientModule, FormsModule, FontAwesomeModule ],
   providers: [
     {provide: APP_INITIALIZER, useFactory: initializeApp, deps: [InitializerService], multi: true},

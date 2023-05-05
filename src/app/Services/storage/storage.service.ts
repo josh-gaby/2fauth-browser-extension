@@ -43,12 +43,10 @@ export class StorageService {
   protected saveToStorage(data: any): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.storageArea !== undefined) {
-        this.storageArea.set({[this.storeKey]: data}).then(() => {
-          resolve(true);
-        }, error => {
-          console.error(error);
-          reject(false);
-        });
+        this.storageArea.set({[this.storeKey]: data}).then(
+          () => resolve(true),
+          () => reject(false)
+        );
       } else {
         if  (this.storeType !== StorageType.sessionStorage) {
           // Put the object into localStorage
