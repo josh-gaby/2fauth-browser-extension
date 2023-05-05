@@ -29,7 +29,7 @@
   </div>
   <div class="container field select">
     <label class="has-grey-text">2FAuth timeout</label>
-    <select [(ngModel)]="this.lock_timer" [disabled]="!this.password_set">
+    <select [(ngModel)]="this.lock_timer" [disabled]="this.password_set === false">
       <option value="0">Immediately</option>
       <option value="1">1 minute</option>
       <option value="5">5 minutes</option>
@@ -41,9 +41,9 @@
       <option value="null">Never</option>
     </select>
   </div>
-  <div class="container field" [hidden]="this.lock_timer === null || this.lock_timer === 'null' ">
+  <div class="container field">
     <label class="has-grey-text">Password</label>
-    <input type="text" class="input" placeholder="Enter your host url" [(ngModel)]="this.new_password"/>
+    <input type="password" class="input" [placeholder]="password_set !== false ? starred_pass : 'Set a password'" [(ngModel)]="this.new_password" (change)="passwordChanged()"/>
   </div>
   <div class="field">
     <button class="button is-link" (click)="saveSettings()">Save</button>

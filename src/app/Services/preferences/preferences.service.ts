@@ -2,6 +2,7 @@ import {Injectable, NgZone, Optional} from '@angular/core';
 import {Preferences, PreferencesClass} from "../../Models/preferences";
 import {ApiService} from "../api/api.service";
 import {StorageService, StorageType} from "../storage/storage.service";
+import {firstValueFrom} from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -32,21 +33,23 @@ export class PreferencesService extends StorageService {
    * Get the preferences from the server and save them in storage
    */
   public updateFromServer(): Promise<boolean> {
-    return new Promise<boolean>(resolve => {
-      this.api.getPreferences().subscribe({
-        next: (preferences: Preferences) => {
+    try {
+      return firstValueFrom(this.api.getPreferences(), {defaultValue: false}).then(
+        preferences => {
           // Only update the stored data if the preferences have changed
           let equal = this.deepEqual(this.data, preferences);
           if (!equal) {
             this.data = preferences;
             this.saveToStorage(preferences);
           }
-          resolve(true);
+          return true;
         },
-        error: error => {
-          resolve(false);
+        () => {
+          return false;
         }
-      });
-    });
+      );
+    } catch (e) {
+      return new Promise<boolean>(resolve => resolve(false));
+    }
   }
 }

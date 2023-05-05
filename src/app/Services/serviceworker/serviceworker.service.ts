@@ -16,10 +16,10 @@ export class ServiceWorkerService {
     try {
       return runtime.sendMessage({ type: type, payload: payload }).then(data => {
         message.data = data;
-        return new Promise<SwMessage>((resolve, reject) => resolve(message));
+        return Promise.resolve(message);
       });
     } catch (error) {
-      return new Promise<SwMessage>((resolve, reject) => resolve(message));
+      return Promise.resolve(message);
     }
   }
 }

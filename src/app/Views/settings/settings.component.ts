@@ -31,6 +31,7 @@ export class SettingsComponent {
   public have_pat: boolean = false;
   public starred_pat: string = '';
   protected new_pat: string = '';
+  public starred_pass: string = '';
   protected new_password: string = '';
   protected themes = [
     { text: 'Light', value: 'light', icon: faSun },
@@ -41,7 +42,7 @@ export class SettingsComponent {
   protected lock_timer: number | string | null;
   protected original_lock_timer: number | null;
   protected disable_back: boolean = false;
-  protected password_set: boolean = false;
+  protected password_set: number | boolean = false;
   protected readonly faArrowLeftLong = faArrowLeftLong;
 
   constructor(private _sw: ServiceWorkerService,
@@ -59,11 +60,18 @@ export class SettingsComponent {
     this.password_set = this.settings.get("password_set", false);
     this.have_pat = this.host_pat.length > 0;
     this.starred_pat = this.getStarredPat();
+    this.starred_pass = '*'.repeat(this.password_set as number);
     this.lock_timer = this.settings.get('lock_timeout', null);
+    this.lock_timer = this.lock_timer === null ? 'null' : this.lock_timer;
     this.original_lock_timer = this.settings.get('lock_timeout', null);
     this.current_theme = this.settings.get('theme', "system");
   }
 
+  /**
+   * Get a starred version of the PAT
+   *
+   * @private
+   */
   private getStarredPat(): string {
     let length = this.host_pat.length;
     if (length === 0) {
@@ -96,73 +104,90 @@ export class SettingsComponent {
 
     this.settings.set('host_url', this.host_url);
 
-    if (old_url && (old_pat || update_pat)) {
-      if (update_pat) {
-        this.settings.set('decoded_pat', this.new_pat);
-      }
+    if (update_pat) {
+      this.settings.set('decoded_pat', this.new_pat);
+    }
 
-      // TODO: make sure update from server can return false if it fails or is unauthorized.
+    new Promise(resolve => {
+      // Test the provided server details by trying to load the user preferences from the server
       this.preferences.updateFromServer().then(
         status => {
           if (status === true) {
-            // Preferences loaded successfully
             this.api.invalid_token = false;
-            return true;
+            resolve(true);
           }
-          return SettingsError.SERVER_ACCESS;
+          resolve(SettingsError.SERVER_ACCESS);
         },
-        () => SettingsError.SERVER_ACCESS
-      ).then(results => {
-        // Update the password
-        if (results === true && update_password) {
-          this.password_set = true;
-          if (!update_pat) {
-            // Update the password and re-encrypt the current PAT using the key
-            return this._sw.sendMessage(SwMessageType.CHANGE_ENC_KEY, this.new_password).then(response => (response.data.status || SettingsError.UPDATE_PASSWORD), () => SettingsError.UPDATE_PASSWORD);
-          } else {
-            // Update the password but don't bother re-encrypting the PAT since we are updating it anyway
-            return this._sw.sendMessage(SwMessageType.SET_ENC_KEY, this.new_password).then(response => (response.data.status || SettingsError.PASSWORD), () => SettingsError.PASSWORD);
-          }
+        () => {
+          resolve(SettingsError.SERVER_ACCESS);
         }
-        return results;
-      }).then(results => {
-        // Update the PAT
-        if (results === true && update_pat) {
-          return this.updatePat().then(status => (status || SettingsError.PAT), () => SettingsError.PAT);
-        }
-        return results;
-      }).then(results => {
-        // Update the lock timer
-        if (results === true && this.password_set) {
-          return this.updateLockTimer().then(lock_result => (lock_result || SettingsError.LOCK_TIMER), () => SettingsError.LOCK_TIMER);
-        }
-        return results;
-      }).then(results => {
-        switch (results) {
-          case true:
-            this.settings.set('password_set', this.password_set);
-            this.settings.save().then(() => {
-              this.initializer.initApp();
-              // Redirect to the main accounts page
-              this.router.navigate(['/accounts']);
-            });
-            break;
-          case SettingsError.SERVER_ACCESS:
-            this.settings.set('host_url', old_url);
-            this.settings.set('decoded_pat', old_pat);
-            // Failed to load preferences, let the user know and stay on the settings page
-            this.notifier.error("Couldn't connect to the specified server", 3000);
-            break;
-          case SettingsError.PASSWORD:
-            // @ts-ignore
-          case SettingsError.UPDATE_PASSWORD:
-            this.password_set = false;
-          default:
-            console.log(results);
-            this.notifier.error("Failed to save settings", 3000);
-            break;
-        }
-      });
+      )
+    }).then(results => {
+      // Update the password
+      if (results === true && update_password) {
+        console.debug('Updating password');
+        return this.updatePassword(update_pat);
+      }
+      return results;
+    }).then(results => {
+      // Update the PAT
+      if (results === true && update_pat) {
+        console.debug('Updating PAT');
+        return this.updatePat();
+      }
+      return results;
+    }).then(results => {
+      // Update the lock timer
+      if (results === true && this.password_set !== false) {
+        console.debug('Updating Lock timer');
+        return this.updateLockTimer();
+      }
+      return results;
+    }).then(results => {
+      switch (results) {
+        case true:
+          this.settings.set('password_set', this.password_set);
+          this.settings.save().then(() => {
+            this.initializer.initApp();
+            // Redirect to the main accounts page
+            this.router.navigate(['/accounts']);
+          });
+          break;
+        case SettingsError.SERVER_ACCESS:
+          this.settings.set('host_url', old_url);
+          this.settings.set('decoded_pat', old_pat);
+          // Failed to load preferences, let the user know and stay on the settings page
+          this.notifier.error("Couldn't connect to the specified server", 3000);
+          break;
+        case SettingsError.PASSWORD:
+          // @ts-ignore
+        case SettingsError.UPDATE_PASSWORD: // NOSONAR
+          this.password_set = false;
+        default:
+          console.log(results);
+          this.notifier.error("Failed to save settings", 3000);
+          break;
+      }
+    });
+  }
+
+  public passwordChanged() {
+    this.password_set = this.new_password.length || false;
+  }
+
+  /**
+   * Update the password
+   * @param update_pat
+   * @private
+   */
+  private updatePassword(update_pat: boolean) {
+    this.password_set = this.new_password.length;
+    if (!update_pat) {
+      // Update the password and re-encrypt the current PAT using the key
+      return this._sw.sendMessage(SwMessageType.CHANGE_ENC_KEY, this.new_password).then(response => (response.data.status || SettingsError.UPDATE_PASSWORD), () => SettingsError.UPDATE_PASSWORD);
+    } else {
+      // Update the password but don't bother re-encrypting the PAT since we are updating it anyway
+      return this._sw.sendMessage(SwMessageType.SET_ENC_KEY, this.new_password).then(response => (response.data.status || SettingsError.PASSWORD), () => SettingsError.PASSWORD);
     }
   }
 
@@ -171,17 +196,17 @@ export class SettingsComponent {
    *
    * @private
    */
-  private updatePat(): Promise<boolean> {
+  private updatePat() {
     return this._sw.sendMessage(SwMessageType.ENCRYPT_PAT, this.new_pat).then(cipher_text => {
       if (cipher_text.data.status) {
         this.settings.set("host_pat", cipher_text.data.host_pat);
         return this.settings.save().then(
           () => true,
-          () => false
+          () => SettingsError.PAT
         );
       }
 
-      return false;
+      return SettingsError.PAT;
     })
   }
 
@@ -190,15 +215,15 @@ export class SettingsComponent {
    *
    * @private
    */
-  private updateLockTimer(): Promise<boolean> {
-    this.lock_timer = this.lock_timer === 'null' ? null : this.lock_timer;
+  private updateLockTimer() {
+    this.lock_timer = this.lock_timer === 'null' ? null : this.lock_timer as number;
     if (this.lock_timer !== this.original_lock_timer) {
       return this._sw.sendMessage(SwMessageType.SET_LOCK_TYPE, this.lock_timer).then(
-        status => true,
-        () => false
+        status => (status.data.status || SettingsError.LOCK_TIMER),
+        () => SettingsError.LOCK_TIMER
       );
     } else {
-      return new Promise(resolve => resolve(false));
+      return Promise.resolve(true);
     }
   }
 
