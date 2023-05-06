@@ -158,7 +158,7 @@ export class StorageService {
    * Load from storage
    */
   public load(): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       this.loadFromStorage().then((data: any) => {
         if (typeof this.data === typeof data) {
           this.data = data;

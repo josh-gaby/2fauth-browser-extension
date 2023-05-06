@@ -28,20 +28,15 @@ export class InitializerService {
     // Reapply the theme that was last applied on this system
     this.theme.applyPrevious();
     // Load the settings
-    return new Promise((resolve, reject) => {
-      // TODO: update service worker initial lock state (only on first launch, will be tracked by local storage after this)
-      // Next, load settings from sync storage
+    return new Promise(resolve => {
+      // Next, load settings from storage
       this.settings.load().then(() => {
         // Next, load the account cache
-        this.account_cache.load();
-        // Then apply the theme currently stored in the settings since this could have been updated on a different system
-        this.theme.setTheme(this.settings.get('theme'));
-        // Finally, load any stored preferences from storage
-        this.preferences.load();
-        resolve(true);
-      }, () => {
-        reject(false);
-      })
+        this.account_cache.load().then(() => {
+          // Finally, load any stored preferences from storage
+          this.preferences.load().then(() => resolve(true));
+        });
+      });
     });
   }
 

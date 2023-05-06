@@ -10,6 +10,9 @@ import {ServiceWorkerService} from "../../Services/serviceworker/serviceworker.s
 import {SwMessageType} from "../../Models/message";
 import {storage} from "webextension-polyfill";
 import {InitializerService} from "../../Services/initializer/initializer.service";
+import {AccountCacheService} from "../../Services/accountcache/accountcache.service";
+import {SettingsClass} from "../../Models/settings";
+import {PreferencesClass} from "../../Models/preferences";
 
 enum SettingsError {
   SERVER_ACCESS = -1,
@@ -46,6 +49,7 @@ export class SettingsComponent {
   protected readonly faArrowLeftLong = faArrowLeftLong;
 
   constructor(private _sw: ServiceWorkerService,
+              private account_cache: AccountCacheService,
               private api: ApiService,
               private initializer: InitializerService,
               private notifier: NotificationService,
@@ -258,7 +262,11 @@ export class SettingsComponent {
       storage.local.clear().then(() => {
         storage.sync.clear().then(() => {
           this._sw.sendMessage(SwMessageType.RESET_EXT).then(() => {
+            this.settings.data = new SettingsClass();
+            this.preferences.data = new PreferencesClass();
+            this.account_cache.data = [];
             this.initializer.initApp();
+            window.close();
           });
         });
       })
