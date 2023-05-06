@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {SettingsService} from "../settings/settings.service";
 import {ThemingService} from "../theming/theming.service";
 import {PreferencesService} from "../preferences/preferences.service";

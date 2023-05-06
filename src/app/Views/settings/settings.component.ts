@@ -10,7 +10,6 @@ import {ServiceWorkerService} from "../../Services/serviceworker/serviceworker.s
 import {SwMessageType} from "../../Models/message";
 import {storage} from "webextension-polyfill";
 import {InitializerService} from "../../Services/initializer/initializer.service";
-import {take} from "rxjs";
 
 enum SettingsError {
   SERVER_ACCESS = -1,
@@ -63,7 +62,6 @@ export class SettingsComponent {
     this.starred_pat = this.getStarredPat();
     this.starred_pass = '*'.repeat(this.password_set as number);
     this.lock_timer = this.settings.get('lock_timeout', null);
-    //this.lock_timer = this.lock_timer === null ? 'null' : this.lock_timer;
     this.original_lock_timer = this.settings.get('lock_timeout', null);
     this.current_theme = this.settings.get('theme', "system");
   }
@@ -141,9 +139,16 @@ export class SettingsComponent {
         case true:
           this.settings.set('password_set', this.password_set);
           this.settings.save().then(() => {
-            //this.initializer.initApp();
-            // Redirect to the main accounts page
-            this.router.navigate(['/accounts']);
+            if (this.host_url !== old_url || update_pat) {
+              // Load the current user preferences from the server
+              this.preferences.updateFromServer().then(() => {
+                // Redirect to the main accounts page
+                this.router.navigate(['/accounts']);
+              });
+            } else {
+              // Redirect to the main accounts page
+              this.router.navigate(['/accounts']);
+            }
           });
           break;
         case SettingsError.SERVER_ACCESS:
@@ -215,9 +220,16 @@ export class SettingsComponent {
   private updatePat() {
     return this._sw.sendMessage(SwMessageType.ENCRYPT_PAT, this.new_pat).then(cipher_text => {
       if (cipher_text.data.status) {
-        return this.savePat(cipher_text.data.host_pat).then(status => (status || SettingsError.PAT), () => SettingsError.PAT);
+        return this.savePat(cipher_text.data.host_pat).then(
+          status => {
+            return this._sw.sendMessage(SwMessageType.UNLOCK).then(
+              unlocked => (status || SettingsError.PAT),
+              () => SettingsError.PAT
+            )
+          },
+          () => SettingsError.PAT
+        );
       }
-
       return SettingsError.PAT;
     })
   }

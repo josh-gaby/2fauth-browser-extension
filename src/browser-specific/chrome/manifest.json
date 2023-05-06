@@ -4,8 +4,9 @@
   "description": "2FAuth extension",
   "permissions": [
     "alarms",
-    "storage",
     "clipboardWrite",
+    "idle",
+    "storage",
     "unlimitedStorage"
   ],
   "host_permissions": [

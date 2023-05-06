@@ -45,7 +45,7 @@ export class StorageService {
       if (this.storageArea !== undefined) {
         this.storageArea.set({[this.storeKey]: data}).then(
           () => resolve(true),
-          () => reject(false)
+          () => resolve(false)
         );
       } else {
         if  (this.storeType !== StorageType.sessionStorage) {

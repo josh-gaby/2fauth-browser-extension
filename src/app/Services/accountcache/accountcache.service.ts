@@ -8,6 +8,7 @@ import {StorageService, StorageType} from "../storage/storage.service";
 import {SettingsClass} from "../../Models/settings";
 import {SwMessageType} from "../../Models/message";
 import {ServiceWorkerService} from "../serviceworker/serviceworker.service";
+import {take} from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -26,14 +27,26 @@ export class AccountCacheService extends StorageService {
   /**
    * Update the cached list of Accounts from the server
    */
-  update(): void {
-    this._api.getAccounts().subscribe((accounts: Account[]) => {
-      // Only update the stored data if the accounts list has changed
-      let equal = this.data?.length === accounts.length && this.data?.every((o: Account, idx: number) => this.deepEqual(o, accounts[idx]));
-      if (!equal) {
-        this.data = accounts;
-        this.saveToStorage(accounts);
-      }
+  update(): Promise<boolean> {
+    return new Promise(resolve => {
+      this._api.getAccounts().pipe(take(1)).subscribe(
+        (accounts: Account[]) => {
+          // Only update the stored data if the accounts list has changed
+          let equal = this.data?.length === accounts.length && this.data?.every((o: Account, idx: number) => this.deepEqual(o, accounts[idx]));
+          if (!equal) {
+            this.data = accounts;
+            this.saveToStorage(accounts).then(
+              status => {
+                resolve(status);
+              },
+              () => {
+                resolve(false);
+              }
+            );
+          }
+          resolve(false)
+        }
+      );
     });
   }
 

@@ -1,8 +1,16 @@
 const APP_STORE_KEY= '2fauth-app-settings',
       KEY_STORE_KEY = '2fauth-enc-key',
       ENC_STORE_KEY= '2fauth-enc-details',
+      STATE_STORE_KEY = '2fauth-state',
       decoder = new TextDecoder(),
-      encoder = new TextEncoder();
+      encoder = new TextEncoder()
+      default_state = {
+        loaded: false,
+        locked: true,
+        last_active: null,
+        lock_type: null,
+        pat: ''
+      };
 
 let ext_client,
   _browser = (typeof browser === "undefined") ? chrome : browser,
@@ -12,25 +20,27 @@ let ext_client,
     salt: null,
     iv: null
   },
-  locked = true,
-  lock_type = null,
-  pat = '';
+  state = {...default_state};
 
 /**
  * Detect all browser windows closing and lock extension if required
  *
  * TODO: Needs testing without dev-tools windows open to see if it still triggers ( hint: it doesn't seem to :/ )
  */
-_browser.windows.onRemoved.addListener(async window_id => {
+_browser.windows.onRemoved.addListener(window_id => {
   _browser.windows.getAll().then(window_list => {
-    if (window_list.length === 0 && lock_type !== null) {
-      this.locked = true;
-      storeVariables().then(() => {
+    if (window_list.length === 0 && state.lock_type !== null) {
+      state.locked = true;
+      storeState().then(() => {
         _browser.storage.local.set({[KEY_STORE_KEY]: null});
       });
     }
   })
 });
+
+_browser.runtime.onStartup.addListener(handleStartup);
+_browser.runtime.onInstalled.addListener(handleStartup);
+_browser.runtime.onSuspend.addListener(handleClose);
 
 _browser.runtime.onMessage.addListener((message, sender, response) => {
   const message_type = message.type ? message.type : undefined;
@@ -70,47 +80,61 @@ _browser.alarms.onAlarm.addListener(alarm => {
   }
 });
 
-_browser.runtime.onStartup.addListener(() => {
-  loadVariables();
-});
+_browser.idle.onStateChanged.addListener(new_state => {
+  if (new_state === 'locked' &&  state.lock_type !== null && state.lock_type !== -1) {
+    lockNow();
+  }
+})
 
 _browser.runtime.onConnect.addListener(externalPort => {
-  externalPort.onDisconnect.addListener(() => {
-    storeVariables().then(() => {
-      setLockTimer()
-    });
-  });
+  if (state.loaded === false) {
+    loadState();
+  }
+  externalPort.onDisconnect.addListener(handleClose);
 });
 
-function storeVariables() {
-  const data = {
-    lock_type: lock_type,
-    locked: locked,
-    pat: pat
-  };
-  return _browser.storage.local.set({'lock-details': data}).then(() => true, () => false);
+function handleStartup() {
+  loadState().then(() => {
+    if (state.lock_type !== null) {
+      lockNow();
+    }
+  });
 }
 
-function loadVariables() {
-  return _browser.storage.local.get({'lock-details': {}}).then(
-    lock_details => {
-      lock_details = lock_details['lock-details'];
-      lock_type = lock_details.lock_type ?? null;
-      locked = lock_details.locked ?? true;
-      pat = lock_details.pat ?? '';
+function handleClose() {
+  storeState().then(() => {
+    setLockTimer()
+  });
+}
+
+function storeState(update_active) {
+  if (update_active ?? true) {
+    state.last_active = Date.now();
+  }
+  return _browser.storage.local.set({[STATE_STORE_KEY]: state}).then(() => true, () => false);
+}
+
+function loadState() {
+  return _browser.storage.local.get({[STATE_STORE_KEY]: default_state}).then(
+    state_data => {
+      state = state_data[STATE_STORE_KEY];
+      state.loaded = true;
+      if (state.lock_type > 0 && state.last_active !== null && ((Date.now() - state.last_active) / 60000) > state.lock_type) {
+        state.locked = true;
+      }
+      return true;
     },
     () => {
-      lock_type = null;
-      locked = true;
-      pat = '';
+      state.loaded = true;
+      return false;
     }
   );
 }
 
 function lockNow() {
-  locked = true;
-  pat = '';
-  storeVariables().then(() => {
+  state.locked = true;
+  state.pat = '';
+  storeState(false).then(() => {
     // Clear the encryption key
     _browser.storage.local.set({[KEY_STORE_KEY]: null}).then(() => {
       // Clear the alarm so it doesn't fire again
@@ -120,25 +144,25 @@ function lockNow() {
 }
 
 function setLockTimer() {
-  if (lock_type !== null) {
-    if (lock_type > 0 && !locked) {
-      _browser.alarms.create('lock-extension', {periodInMinutes: lock_type});
-    } else if (lock_type === 0) {
+  if (state.lock_type !== null && state.lock_type !== -1) {
+    if (state.lock_type > 0) {
+      _browser.alarms.create('lock-extension', {periodInMinutes: state.lock_type});
+    } else if (state.lock_type === 0) {
       lockNow();
     }
   }
 }
 
 function getPat() {
-  if (typeof pat !== 'string') {
-    return Promise.resolve({status: true, pat: decoder.decode(new Uint8Array(pat))});
+  if (typeof state.pat !== 'string') {
+    return Promise.resolve({status: true, pat: decoder.decode(new Uint8Array(state.pat))});
   }
-  return Promise.resolve({status: true, pat: pat});
+  return Promise.resolve({status: true, pat: state.pat});
 }
 
 function isLocked() {
   // This is triggered each time the extension loads, so we will use it as a point to load/generate the salt and iv for encryption
-  return loadVariables().then(() => {
+  return loadState().then(() => {
     return _browser.storage.local.get({[ENC_STORE_KEY]: null}).then(
       details => {
         if (details && details.hasOwnProperty(ENC_STORE_KEY) && details[ENC_STORE_KEY]) {
@@ -166,11 +190,11 @@ function isLocked() {
     () => {
       return _browser.storage.local.get({[APP_STORE_KEY]: {}}).then(
         settings => {
-          let return_value = {locked: true};
+          let return_value = {locked: false};
 
           // The extension can only be locked if there is a PAT present in the settings and the user has set a password
           if (settings.hasOwnProperty(APP_STORE_KEY) && settings[APP_STORE_KEY].hasOwnProperty('host_pat')) {
-            return_value.locked = settings[APP_STORE_KEY]['host_pat'].length > 0 && locked === true;
+            return_value.locked = settings[APP_STORE_KEY]['host_pat'].length > 0 && state.locked === true;
           }
           // If the user has not set a password and locked is true, unlock the PAT using a null key
           if (return_value.locked === true && enc_details.default === true) {
@@ -196,9 +220,9 @@ function resetExt() {
     iv: null,
     default: true
   };
-  locked = false;
-  lock_type = null;
-  pat = '';
+  state.locked = false;
+  state.lock_type = null;
+  state.pat = '';
 
   return new Promise(resolve => resolve());
 }
@@ -209,16 +233,16 @@ function unlockExt() {
       if (!settings || settings.hasOwnProperty(APP_STORE_KEY) === false) {
         return {status: true};
       }
-      pat = settings[APP_STORE_KEY]['host_pat'] || '';
+      state.pat = settings[APP_STORE_KEY]['host_pat'] || '';
       return getEncKey().then(
         key_to_use => {
           return deriveKey(key_to_use, enc_details.salt).then(
             enc_key => {
-              return decryptPat(pat, enc_key).then(
+              return decryptPat(state.pat, enc_key).then(
                 clear_text => {
                   if (clear_text !== 'decryption error') {
-                    pat = clear_text;
-                    locked = false;
+                    state.pat = clear_text;
+                    state.locked = false;
                     return _browser.alarms.clear('lock-extension').then(
                       () => {return {status: true}},
                       () => {return {status: true}}
@@ -257,7 +281,7 @@ function getEncKey() {
 function changeEncKey(key) {
   // Set a new encryption key and re-encrypt PAT using the new key
   return this.setEncKey(key).then(
-    () => this.encryptPat(pat),
+    () => this.encryptPat(state.pat),
     () => {return {status: false, host_pat: null}});
 }
 
@@ -320,7 +344,7 @@ function getKeyMaterial(key) {
   );
 }
 
-function encryptPat(pat) {
+function encryptPat(pat_clear) {
   return _browser.storage.local.get({[KEY_STORE_KEY]: null}).then(details => {
     try {
       if (details && details.hasOwnProperty(KEY_STORE_KEY)) {
@@ -338,7 +362,7 @@ function encryptPat(pat) {
                 iv: enc_details.iv
               },
               enc_key,
-              encoder.encode(pat).buffer
+              encoder.encode(pat_clear).buffer
             ).then(
               ciphertext => {
                 return {status: true, host_pat: Array.apply(null, new Uint8Array(ciphertext))}
@@ -358,6 +382,6 @@ function encryptPat(pat) {
 }
 
 function setLockType(new_lock_type) {
-  lock_type = (new_lock_type !== null && new_lock_type !== 'null') ? parseInt(new_lock_type) : null;
+  state.lock_type = (new_lock_type !== null && new_lock_type !== 'null') ? parseInt(new_lock_type) : null;
   return Promise.resolve({status: true});
 }

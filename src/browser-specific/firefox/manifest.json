@@ -3,10 +3,11 @@
   "name": "2FAuth",
   "description": "2FAuth extension",
   "permissions": [
-    "storage",
+    "alarms",
     "clipboardWrite",
-    "unlimitedStorage",
-    "alarms"
+    "idle",
+    "storage",
+    "unlimitedStorage"
   ],
   "host_permissions": [
     "<all_urls>"
