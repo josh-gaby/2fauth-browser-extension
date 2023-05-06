@@ -29,13 +29,18 @@ let ext_client,
  */
 _browser.windows.onRemoved.addListener(window_id => {
   _browser.windows.getAll().then(window_list => {
-    if (window_list.length === 0 && state.lock_type !== null) {
-      state.locked = true;
-      storeState().then(() => {
-        _browser.storage.local.set({[KEY_STORE_KEY]: null});
-      });
+    if (window_list.length === 0) {
+      const should_lock = state.lock_type !== null;
+      state.locked = should_lock || state.locked;
+      storeState().then(
+        () => {
+          if (should_lock) {
+            lockNow();
+          }
+        }
+      );
     }
-  })
+  });
 });
 
 _browser.runtime.onStartup.addListener(handleStartup);
@@ -88,7 +93,7 @@ _browser.idle.onStateChanged.addListener(new_state => {
 
 _browser.runtime.onConnect.addListener(externalPort => {
   if (state.loaded === false) {
-    loadState();
+    handleStartup();
   }
   externalPort.onDisconnect.addListener(handleClose);
 });
@@ -120,12 +125,12 @@ function loadState() {
       state = state_data[STATE_STORE_KEY];
       state.loaded = true;
       if (state.lock_type > 0 && state.last_active !== null && ((Date.now() - state.last_active) / 60000) > state.lock_type) {
+        state.pat = '';
         state.locked = true;
       }
       return true;
     },
     () => {
-      state.loaded = true;
       // Attempt to re-load some data from 'settings'
       return _browser.storage.local.get({[APP_STORE_KEY]: null}).then(
         settings => {
@@ -134,7 +139,10 @@ function loadState() {
           if (state.lock_type !== null) {
             state.locked = true;
           }
-          return false;
+          return storeState(false).then(() => {
+            return false;
+          })
+
         },
         () => false
       )
