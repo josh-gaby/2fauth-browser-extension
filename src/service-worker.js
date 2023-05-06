@@ -126,7 +126,18 @@ function loadState() {
     },
     () => {
       state.loaded = true;
-      return false;
+      // Attempt to re-load some data from 'settings'
+      return _browser.storage.local.get({[APP_STORE_KEY]: null}).then(
+        settings => {
+          settings = settings[APP_STORE_KEY];
+          state.lock_type = settings.lock_timeout;
+          if (state.lock_type !== null) {
+            state.locked = true;
+          }
+          return false;
+        },
+        () => false
+      )
     }
   );
 }
