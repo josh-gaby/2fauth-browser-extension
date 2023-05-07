@@ -2,6 +2,21 @@
 
 A Firefox/Chrome extension built in [Angular](https://angular.io/) for the awesome self-hosted [2FAuth](https://github.com/Bubka/2FAuth) project by [Bubka](https://github.com/Bubka).
 
+## Usage
+
+1. Generate a Personal Access Token for your account on your 2FAuth instance.
+2. Set the Host URL in the extension to point to your 2FAuth instance.
+3. Enter the token generated in step 1. into the Personal Access Token field in the extension settings.
+4. Save your settings.
+
+The extension will load your preferences from the 2FAuth instance and use them to guide its appearance/behaviour.
+
+The settings currently used include:
+- Show Icons
+- Password formatting
+- Copy OTP on display
+- Close OTP after copy
+
 ## Development 
 
 ### Requirements
