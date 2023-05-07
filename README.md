@@ -41,7 +41,7 @@ npm run dist:firefox
 2. Disable the Firefox extension signing requirement. 
 
    Firefox [Extended Support Release (ESR)](https://www.mozilla.org/firefox/organizations/), Firefox [Developer Edition](https://www.mozilla.org/firefox/developer/) and [Nightly](https://nightly.mozilla.org/) versions of Firefox will allow you to override this setting by changing the preference `xpinstall.signatures.required` to `false` in the `about:config` page.
-3. Install the extension be going to `about:addons` and dragging the downloaded zip file onto the page.
+3. Install the extension by going to `about:addons` and dragging the downloaded zip file onto the page.
 
 
 #### Chrome
