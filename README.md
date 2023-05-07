@@ -1,4 +1,4 @@
-# 2FAuth-Browser-Extension
+# 2FAuth Browser Extension
 
 A Firefox/Chrome extension built in [Angular](https://angular.io/) for the awesome [2FAuth](https://github.com/Bubka/2FAuth) by [Bubka](https://github.com/Bubka) project.
 
