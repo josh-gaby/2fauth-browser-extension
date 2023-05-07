@@ -18,7 +18,7 @@
     "48": "assets/icons/icon48.png",
     "128": "assets/icons/icon128.png"
   },
-  "version": "2023.4.0",
+  "version": "2023.5.0",
   "action": {
     "default_popup": "index.html"
   },

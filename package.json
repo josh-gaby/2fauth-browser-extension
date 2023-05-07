@@ -1,6 +1,6 @@
 {
   "name": "2fauth-chrome",
-  "version": "2023.4.0",
+  "version": "2023.5.0",
   "scripts": {
     "ng": "ng",
     "build:chrome": "ng build -c development,chrome",
