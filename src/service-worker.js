@@ -30,15 +30,11 @@ let ext_client,
 _browser.windows.onRemoved.addListener(window_id => {
   _browser.windows.getAll().then(window_list => {
     if (window_list.length === 0) {
-      const should_lock = state.lock_type !== null;
-      state.locked = should_lock || state.locked;
-      storeState().then(
-        () => {
-          if (should_lock) {
-            lockNow();
-          }
-        }
-      );
+      if (state.lock_type !== null) {
+        lockNow();
+      } else {
+        storeState();
+      }
     }
   });
 });
@@ -86,7 +82,7 @@ _browser.alarms.onAlarm.addListener(alarm => {
 });
 
 _browser.idle.onStateChanged.addListener(new_state => {
-  if (new_state === 'locked' &&  state.lock_type !== null && state.lock_type !== -1) {
+  if (new_state === 'locked' && state.lock_type !== null && state.lock_type !== -1) {
     lockNow();
   }
 })
@@ -100,6 +96,7 @@ _browser.runtime.onConnect.addListener(externalPort => {
 
 function handleStartup() {
   loadState().then(() => {
+    // TODO: check if this should really be called when triggered by onConnect (may be triggered multiple times causing the extension to lock early)
     if (state.lock_type !== null) {
       lockNow();
     }
@@ -153,7 +150,7 @@ function loadState() {
 function lockNow() {
   state.locked = true;
   state.pat = '';
-  storeState(false).then(() => {
+  storeState().then(() => {
     // Clear the encryption key
     _browser.storage.local.set({[KEY_STORE_KEY]: null}).then(() => {
       // Clear the alarm so it doesn't fire again
@@ -165,7 +162,7 @@ function lockNow() {
 function setLockTimer() {
   if (state.lock_type !== null && state.lock_type !== -1) {
     if (state.lock_type > 0) {
-      _browser.alarms.create('lock-extension', {periodInMinutes: state.lock_type});
+      _browser.alarms.create('lock-extension', {delayInMinutes: state.lock_type});
     } else if (state.lock_type === 0) {
       lockNow();
     }
