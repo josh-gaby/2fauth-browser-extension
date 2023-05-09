@@ -117,32 +117,48 @@ function storeState(update_active) {
 }
 
 function loadState() {
-  return _browser.storage.local.get({[STATE_STORE_KEY]: default_state}).then(
+  return _browser.storage.local.get({[STATE_STORE_KEY]: null}).then(
     state_data => {
       state = state_data[STATE_STORE_KEY];
-      state.loaded = true;
-      if (state.lock_type > 0 && state.last_active !== null && ((Date.now() - state.last_active) / 60000) > state.lock_type) {
-        state.pat = '';
-        state.locked = true;
+      if (state !== null) {
+        console.log('Loaded state from storage');
+        state.loaded = true;
+        if (state.lock_type > 0 && state.last_active !== null && ((Date.now() - state.last_active) / 60000) > state.lock_type) {
+          state.pat = '';
+          state.locked = true;
+        }
+        return true;
+      } else {
+        return loadDefaultState();
       }
-      return true;
     },
     () => {
       // Attempt to re-load some data from 'settings'
-      return _browser.storage.local.get({[APP_STORE_KEY]: null}).then(
-        settings => {
-          settings = settings[APP_STORE_KEY];
-          state.lock_type = settings.lock_timeout;
-          if (state.lock_type !== null) {
-            state.locked = true;
-          }
-          return storeState(false).then(() => {
-            return false;
-          })
+      return loadDefaultState();
+    }
+  );
+}
 
-        },
-        () => false
-      )
+function loadDefaultState() {
+  console.log('Loading defaults');
+  state = {...default_state};
+  return _browser.storage.local.get({[APP_STORE_KEY]: null}).then(
+    settings => {
+      settings = settings[APP_STORE_KEY];
+      if (settings !== null) {
+        state.lock_type = (settings.lock_timeout !== null && settings.lock_timeout !== 'null') ? parseInt(settings.lock_timeout) : null;
+        if (state.lock_type !== null) {
+          state.locked = true;
+        }
+      }
+      return storeState(false).then(() => {
+        return false;
+      });
+    },
+    () => {
+      return storeState(false).then(() => {
+        return false;
+      })
     }
   );
 }
