@@ -10,7 +10,7 @@ const APP_STORE_KEY = '2fauth-app-settings',
     loaded: false,
     locked: true,
     last_active: null,
-    lock_type: null,
+    lock_type: false,
     pat: ''
   };
 
@@ -215,6 +215,7 @@ function loadState() {
  */
 function loadDefaultState() {
   state = {...default_state};
+  state.lock_type = null;
   return _browser.storage.local.get({[APP_STORE_KEY]: null}).then(settings => {
     settings = settings[APP_STORE_KEY];
     if (settings !== null) {
