@@ -8,7 +8,10 @@
     "build": "ng build -c development,chrome && ng build -c development,firefox",
     "dist:chrome": "ng build -c production,chrome,chrome-dist",
     "dist:firefox": "ng build -c production,firefox,firefox-dist",
-    "dist": "npm run dist:chrome && npm run dist:firefox"
+    "dist": "npm run dist:chrome && npm run dist:firefox",
+    "package:firefox": "web-ext build -s ./dist/2fauth-firefox -a ./dist/packaged/firefox -o true",
+    "package:chrome": "web-ext build -s ./dist/2fauth-chrome -a ./dist/packaged/chrome -o true",
+    "package": "npm run dist && npm run package:chrome && npm run package:firefox"
   },
   "private": true,
   "dependencies": {
@@ -45,6 +48,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.0.0",
-    "typescript": "~4.9.4"
+    "typescript": "~4.9.4",
+    "web-ext": "^7.6.2"
   }
 }
