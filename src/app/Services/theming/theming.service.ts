@@ -1,5 +1,4 @@
 import {ApplicationRef, Injectable} from '@angular/core';
-import {BehaviorSubject} from "rxjs";
 import {SettingsService} from "../settings/settings.service";
 
 @Injectable({

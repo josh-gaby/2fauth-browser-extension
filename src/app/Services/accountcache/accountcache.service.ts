@@ -1,11 +1,8 @@
 import {Injectable, NgZone, Optional} from '@angular/core';
 import {Account} from "../../Models/account";
 import {AccountCacheClass} from "../../Models/accountcache";
-import {Preferences, PreferencesClass} from "../../Models/preferences";
 import {ApiService} from "../api/api.service";
-import {SettingsService} from "../settings/settings.service";
 import {StorageService, StorageType} from "../storage/storage.service";
-import {SettingsClass} from "../../Models/settings";
 import {SwMessageType} from "../../Models/message";
 import {ServiceWorkerService} from "../serviceworker/serviceworker.service";
 import {take} from "rxjs";

@@ -123,7 +123,7 @@ export class StorageService {
           resolve(true);
         } else {
           // Clear sessionStorage
-          localStorage.clear();
+          sessionStorage.clear();
           resolve(true);
         }
       }

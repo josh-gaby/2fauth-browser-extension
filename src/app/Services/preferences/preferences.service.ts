@@ -2,7 +2,6 @@ import {Injectable, NgZone, Optional} from '@angular/core';
 import {Preferences, PreferencesClass} from "../../Models/preferences";
 import {ApiService} from "../api/api.service";
 import {StorageService, StorageType} from "../storage/storage.service";
-import {firstValueFrom, lastValueFrom} from "rxjs";
 
 @Injectable({
   providedIn: 'root'

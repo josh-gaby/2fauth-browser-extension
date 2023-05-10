@@ -1,14 +1,8 @@
 import {Component} from '@angular/core';
 import {Router} from "@angular/router";
-import {PreferencesService} from "./Services/preferences/preferences.service";
-import {SettingsService} from "./Services/settings/settings.service";
-import {ThemingService} from "./Services/theming/theming.service";
-import {ApiService} from "./Services/api/api.service";
-import {NotificationService} from "./Services/notification/notification.service";
 import {ServiceWorkerService} from "./Services/serviceworker/serviceworker.service";
-import {Subscription} from "rxjs";
 import {SwMessageType} from "./Models/message";
-import {extension, runtime} from "webextension-polyfill";
+import {runtime} from "webextension-polyfill";
 import {InitializerService} from "./Services/initializer/initializer.service";
 
 @Component({
@@ -16,7 +10,6 @@ import {InitializerService} from "./Services/initializer/initializer.service";
 })
 export class AppComponent {
   title = '2FAuth';
-  private _subscription: Subscription | null = null;
 
   constructor(private initializer: InitializerService,
               private router: Router,

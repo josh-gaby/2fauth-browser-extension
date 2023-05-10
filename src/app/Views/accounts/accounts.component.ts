@@ -1,5 +1,4 @@
 import {Component, ViewEncapsulation} from '@angular/core';
-import {AppRoutingModule} from "../../app-routing.module";
 import {faGear} from "@fortawesome/free-solid-svg-icons/faGear";
 import {faSpinner} from "@fortawesome/free-solid-svg-icons/faSpinner";
 import {PreferencesService} from "../../Services/preferences/preferences.service";

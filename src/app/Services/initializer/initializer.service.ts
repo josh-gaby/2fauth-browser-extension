@@ -44,7 +44,7 @@ export class InitializerService {
     // It's not locked, request the PAT from the background worker
     this._sw.sendMessage(SwMessageType.GET_PAT).then(response => {
       this.settings.set('decoded_pat', response.data.pat);
-      if (!this.settings.get("host_url") || !this.settings.get("host_url")) {
+      if (!this.settings.get("host_url") || !this.settings.get("host_pat")) {
         // Missing the host URL or PAT, display the settings page so that they can be entered
         this.router.navigate(['/settings'], {state: {data: {disable_back: true}}});
       } else if (this.api.invalid_token) {
