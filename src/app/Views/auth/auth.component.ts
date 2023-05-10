@@ -5,6 +5,7 @@ import {SettingsService} from "../../Services/settings/settings.service";
 import {Router} from "@angular/router";
 import {InitializerService} from "../../Services/initializer/initializer.service";
 import {faUnlock} from "@fortawesome/free-solid-svg-icons/faUnlock";
+import {NotificationService} from "../../Services/notification/notification.service";
 
 @Component({
   selector: 'app-auth',
@@ -17,6 +18,7 @@ export class AuthComponent {
   protected readonly faUnlock = faUnlock;
   constructor(private _sw: ServiceWorkerService,
               private initializer: InitializerService,
+              private notifier: NotificationService,
               private settings: SettingsService,
               private router: Router
   ) {}
@@ -40,7 +42,6 @@ export class AuthComponent {
   }
 
   handleFailedLogin() {
-    // TODO: Handle failed login notification
-    console.log('Failed to log in');
+    this.notifier.error('Authentication failed.', 3000)
   }
 }
