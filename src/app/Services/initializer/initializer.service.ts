@@ -27,36 +27,48 @@ export class InitializerService {
   public load(): Promise<any> {
     // Reapply the theme that was last applied on this system
     this.theme.applyPrevious();
-    // Load the settings
+    // First, load settings from storage
     return new Promise(resolve => {
-      // Next, load settings from storage
       this.settings.load().then(() => {
-        // Next, load the account cache
-        this.account_cache.load().then(() => {
-          // Finally, load any stored preferences from storage
-          this.preferences.load().then(() => resolve(true));
+        let first: Promise<boolean>;
+        if (!this.settings.get('locked') && this.settings.get('expiry_time') && this.settings.get('expiry_time') < Date.now() && this.settings.get('refresh_token')) {
+          first = this.api.refreshToken();
+        } else {
+          first = Promise.resolve(true);
+        }
+        first.then(response => {
+          if (response) {
+            // Next, load the account cache
+            this.account_cache.load().then(() => {
+              // Finally, load any stored preferences from storage
+              this.preferences.load().then(() => resolve(true));
+            });
+          } else {
+            // TODO: Handle not able to refresh the token
+          }
         });
       });
     });
   }
 
   initApp() {
-    // It's not locked, request the PAT from the background worker
-    this._sw.sendMessage(SwMessageType.GET_PAT).then(response => {
-      this.settings.set('decoded_pat', response.data.pat);
-      if (!this.settings.get("host_url") || !this.settings.get("host_pat")) {
-        // Missing the host URL or PAT, display the settings page so that they can be entered
-        this.router.navigate(['/settings'], {state: {data: {disable_back: true}}});
-      } else if (this.api.invalid_token) {
-        this.notifier.error("Invalid Personal Access Token", 3000);
-        this.router.navigate(['/settings'], {state: {data: {disable_back: true}}});
-      } else {
-        // Load the current user preferences from the server
-        this.preferences.updateFromServer();
-        this.theme.setTheme(this.settings.get('theme'));
-        // Redirect to the accounts page
-        this.router.navigate(['/accounts']);
-      }
-    });
+    if (!this.settings.get("host_url") || !this.settings.get("username") || !this.settings.get("client_id") || !this.settings.get("client_secret")) {
+      this.redirectSettings();
+    } else {
+      this.redirectAccounts();
+    }
+  }
+
+  redirectSettings() {
+    // Redirect to the settings screen with no back button
+    this.router.navigate(['/settings'], {state: {data: {disable_back: true}}});
+  }
+
+  redirectAccounts() {
+    // Load the current user preferences from the server
+    this.preferences.updateFromServer();
+    this.theme.setTheme(this.settings.get('theme'));
+    // Redirect to the accounts page
+    this.router.navigate(['/accounts']);
   }
 }

@@ -21,15 +21,27 @@
   </div>
   <div class="container field">
     <label class="has-grey-text">Host Url</label>
-    <input type="text" class="input" placeholder="Enter your host url" id="host_url" [(ngModel)]="this.host_url"/>
+    <input type="text" class="input" placeholder="2FAuth host url" id="host_url" [(ngModel)]="this.host_url"/>
   </div>
   <div class="container field">
-    <label class="has-grey-text">Personal Access Token</label>
-    <textarea class="textarea" [(ngModel)]="this.new_pat" [placeholder]="(have_pat ? 'Existing Personal Access Token:\n' + starred_pat : 'Enter your Personal Access Token')"></textarea>
+    <label class="has-grey-text">Client ID</label>
+    <input type="text" class="input" placeholder="2FAuth client ID" [(ngModel)]="this.client_id"/>
+  </div>
+  <div class="container field">
+    <label class="has-grey-text">Client Secret</label>
+    <input type="text" class="input" placeholder="2FAuth client secret" [(ngModel)]="this.client_secret"/>
+  </div>
+  <div class="container field">
+    <label class="has-grey-text">Username</label>
+    <input type="text" class="input" placeholder="2FAuth username" [(ngModel)]="this.username"/>
+  </div>
+  <div class="container field">
+    <label class="has-grey-text">Password</label>
+    <input type="text" class="input" placeholder="2FAuth password" [(ngModel)]="this.password"/>
   </div>
   <div class="container field select">
     <label class="has-grey-text">2FAuth timeout</label>
-    <select [(ngModel)]="this.lock_timer" [disabled]="this.password_set === false">
+    <select [(ngModel)]="this.lock_timer">
       <option value="0">Immediately</option>
       <option value="1">1 minute</option>
       <option value="5">5 minutes</option>
@@ -39,10 +51,6 @@
       <option value="240">4 hours</option>
       <option value="null">Never</option>
     </select>
-  </div>
-  <div class="container field">
-    <label class="has-grey-text">Password</label>
-    <input type="password" class="input" [placeholder]="password_set !== false ? starred_pass : 'Set a password'" [(ngModel)]="this.new_password" (change)="passwordChanged()"/>
   </div>
   <div class="field">
     <button class="button is-link" (click)="saveSettings()">Save</button>

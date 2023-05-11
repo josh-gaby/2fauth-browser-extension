@@ -6,10 +6,16 @@ import {IPref, Preferences} from "../../Models/preferences";
 import {forkJoin, from, map, Observable, of, switchMap} from "rxjs";
 import {SettingsService} from "../settings/settings.service";
 
+interface OauthTokenPostResponse {
+  token_type: string;
+  access_token: string;
+  expires_in: number;
+  refresh_token: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
-
 export class ApiService {
   _invalid_token: boolean = false;
   constructor(private http: HttpClient, private settings: SettingsService) {}
@@ -26,7 +32,7 @@ export class ApiService {
     if (this._invalid_token) {
       return of([]);
     }
-    return this.http.get<Account[]>(this.getUrl() + 'twofaccounts').pipe(
+    return this.http.get<Account[]>(this.getApiUrl() + 'twofaccounts').pipe(
       switchMap(accounts => {
         let blobStateObservables = accounts.map(account => {
           if (account.icon !== null) {
@@ -83,7 +89,7 @@ export class ApiService {
     if (this._invalid_token) {
       return of({} as Otp);
     }
-    return this.http.get<Otp>(`${this.getUrl()}twofaccounts/${account_id}/otp`);
+    return this.http.get<Otp>(`${this.getApiUrl()}twofaccounts/${account_id}/otp`);
   }
 
   groups() {
@@ -94,6 +100,78 @@ export class ApiService {
     // TODO
   }
 
+  public refreshToken() {
+    return new Promise<boolean>(resolve => {
+        const url = `${this.getOauthUrl()}token`,
+            data = {
+                grant_type: 'refresh_token',
+                scope: '*',
+                client_id: this.settings.get('client_id'),
+                client_secret: this.settings.get('client_secret'),
+                refresh_token: this.settings.get('refresh_token')
+            }
+        this.http.post<HttpResponse<any>>(url, JSON.stringify(data), {observe: 'response'}).subscribe({
+          next: response => {
+            if (response.status >= 200 && response.status < 400) {
+              const data = response.body as unknown as OauthTokenPostResponse;
+              this.settings.set('access_token', data.access_token);
+              this.settings.set('refresh_token', data.refresh_token);
+              this.settings.set('expiry_time', Date.now() + ((data.expires_in - 300) * 1000));
+              resolve(true);
+            } else {
+              this.resetOauthValues();
+              resolve(false);
+            }
+          },
+          error: (e: HttpErrorResponse) => {
+            this.resetOauthValues();
+            resolve(false);
+          }
+        });
+    });
+  }
+
+
+
+  public requestAccessToken(password: string = '') {
+    return new Promise<boolean>(resolve => {
+      const url = `${this.getOauthUrl()}token`,
+            data = {
+              grant_type: 'password',
+              scope: '*',
+              client_id: this.settings.get('client_id'),
+              client_secret: this.settings.get('client_secret'),
+              username: this.settings.get('username'),
+              password: password
+            }
+      let data_to_send = JSON.stringify(data);
+      this.http.post<HttpResponse<any>>(url, data_to_send, {observe: 'response'}).subscribe({
+        next: response => {
+          if (response.status >= 200 && response.status < 400 && response.body !== null) {
+            const data = response.body as unknown as OauthTokenPostResponse;
+            this.settings.set('access_token', data.access_token);
+            this.settings.set('refresh_token', data.refresh_token);
+            this.settings.set('expiry_time', Date.now() + ((data.expires_in - 300) * 1000));
+            resolve(true);
+          } else {
+            this.resetOauthValues();
+            resolve(false);
+          }
+        },
+        error: (e: HttpErrorResponse) => {
+          this.resetOauthValues();
+          resolve(false);
+        }
+      });
+    });
+  }
+
+  private resetOauthValues() {
+    this.settings.set('access_token', null);
+    this.settings.set('refresh_token', null);
+    this.settings.set('expiry_time', null);
+  }
+
   /**
    * Check if the api is accessible using the current settings
    */
@@ -102,7 +180,7 @@ export class ApiService {
       if (this._invalid_token) {
         resolve(false);
       }
-      let url = `${this.getUrl()}user/preferences`;
+      let url = `${this.getApiUrl()}user/preferences`;
       this.http.get<HttpResponse<any>>(url, {observe: 'response'}).subscribe({
         next: response => {
           if (response.status >= 200 && response.status < 400) {
@@ -122,7 +200,7 @@ export class ApiService {
     if (this._invalid_token) {
       return of({} as Preferences);
     }
-    let url = `${this.getUrl()}user/preferences`;
+    let url = `${this.getApiUrl()}user/preferences`;
     return this.http.get<IPref[]>(url).pipe(
       map((preferences: IPref[]) => {
         let _map = <any>{};
@@ -134,7 +212,11 @@ export class ApiService {
     );
   }
 
-  private getUrl(): string {
+  private getApiUrl(): string {
     return this.settings.get('host_url') + '/api/v1/';
+  }
+
+  private getOauthUrl(): string {
+    return this.settings.get('host_url') + '/oauth/';
   }
 }

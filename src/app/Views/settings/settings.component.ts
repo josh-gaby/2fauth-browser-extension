@@ -30,23 +30,20 @@ enum SettingsError {
 })
 export class SettingsComponent {
   protected host_url: string;
-  private host_pat: string;
-  public have_pat: boolean = false;
-  public starred_pat: string = '';
-  protected new_pat: string = '';
-  public starred_pass: string = '';
-  protected new_password: string = '';
+  public client_id: string = '';
+  public client_secret: string = '';
+  public username: string = '';
+  public password: string = '';
+  protected current_theme: string;
+  protected lock_timer: number | string | null;
+  protected original_lock_timer: number | null;
+  protected disable_back: boolean = false;
+  protected readonly faArrowLeftLong = faArrowLeftLong;
   protected themes = [
     { text: 'Light', value: 'light', icon: faSun },
     { text: 'Dark', value: 'dark', icon: faMoon },
     { text: 'Auto', value: 'system', icon: faDesktop },
   ];
-  protected current_theme: string;
-  protected lock_timer: number | string | null;
-  protected original_lock_timer: number | null;
-  protected disable_back: boolean = false;
-  protected password_set: number | boolean = false;
-  protected readonly faArrowLeftLong = faArrowLeftLong;
 
   constructor(private _sw: ServiceWorkerService,
               private account_cache: AccountCacheService,
@@ -60,28 +57,12 @@ export class SettingsComponent {
   ) {
     this.disable_back = history.state?.data?.disable_back || false;
     this.host_url = this.settings.get("host_url", "");
-    this.host_pat = this.settings.get("decoded_pat", "");
-    this.password_set = this.settings.get("password_set", false);
-    this.have_pat = this.host_pat.length > 0;
-    this.starred_pat = this.getStarredPat();
-    this.starred_pass = '*'.repeat(this.password_set as number);
     this.lock_timer = this.settings.get('lock_timeout', null);
     this.original_lock_timer = this.settings.get('lock_timeout', null);
     this.current_theme = this.settings.get('theme', "system");
-  }
-
-  /**
-   * Get a starred version of the PAT
-   *
-   * @private
-   */
-  private getStarredPat(): string {
-    let length = this.host_pat.length;
-    if (length === 0) {
-      return '';
-    }
-    let start_end_length = length > 100 ? 20 : (length > 50 ? 15 : (length > 20 ? 5 : 1));
-    return this.host_pat.substring(0, start_end_length) + '*'.repeat(Math.min(280, this.host_pat.length - (start_end_length * 2))) + this.host_pat.substring(this.host_pat.length - start_end_length);
+    this.username = this.settings.get("username");
+    this.client_id = this.settings.get("client_id");
+    this.client_secret = this.settings.get("client_secret");
   }
 
   /**
@@ -100,50 +81,44 @@ export class SettingsComponent {
    * Save the settings
    */
   public saveSettings(): void {
-    const update_pat: boolean = this.new_pat.length > 0,
-          update_password: boolean = this.new_password.length > 0,
-          old_url = this.settings.get("host_url"),
-          old_pat = this.settings.get("decoded_pat");
+    const old_url = this.settings.get("host_url"),
+          old_username = this.settings.get("username"),
+          old_client_id = this.settings.get("client_id"),
+          old_client_secret = this.settings.get("client_secret"),
+          server_details_changed = this.host_url !== old_url || this.client_id !== old_client_id || this.client_secret !== old_client_secret || this.password !== '' || this.username !== old_username;
 
     this.settings.set('host_url', this.host_url);
+    this.settings.set('username', this.username);
+    this.settings.set('client_id', this.client_id);
+    this.settings.set('client_secret', this.client_secret);
 
-    if (update_pat) {
-      this.settings.set('decoded_pat', this.new_pat);
+    let first: Promise<boolean | SettingsError>;
+    // If the server details have changed, test that they can be used to access the server
+    if (server_details_changed) {
+      // TODO: Request the users password using a popup instead of a standard input
+      first = this.api.requestAccessToken(this.password).then(
+        results => {
+          return (results || SettingsError.SERVER_ACCESS)
+        },
+        () => {
+          return SettingsError.SERVER_ACCESS
+        }
+      )
+    } else {
+      first = Promise.resolve(true);
     }
 
-    // Test the provided server details
-    this.api.checkAccess().then(
-      results => {
-        return (results || SettingsError.SERVER_ACCESS)
-      },
-      () => {
-        return SettingsError.SERVER_ACCESS
-      }
-    ).then(
-      results => {
-      // Update the password
-      if (results === true && update_password) {
-        return this.updatePassword(update_pat);
-      }
-      return results;
-    }).then(results => {
-      // Update the PAT
-      if (results === true && update_pat) {
-        return this.updatePat();
-      }
-      return results;
-    }).then(results => {
+    first.then(results => {
       // Update the lock timer
-      if (results === true && this.password_set !== false) {
+      if (results === true) {
         return this.updateLockTimer();
       }
       return results;
     }).then(results => {
       switch (results) {
         case true:
-          this.settings.set('password_set', this.password_set);
           this.settings.save().then(() => {
-            if (this.host_url !== old_url || update_pat) {
+            if (server_details_changed) {
               // Load the current user preferences from the server
               this.preferences.updateFromServer().then(() => {
                 // Redirect to the main accounts page
@@ -157,85 +132,18 @@ export class SettingsComponent {
           break;
         case SettingsError.SERVER_ACCESS:
           this.settings.set('host_url', old_url);
-          this.settings.set('decoded_pat', old_pat);
+          this.settings.set('client_id', old_client_id);
+          this.settings.set('client_secret', old_client_secret);
+          this.settings.set('username', old_username);
+
           // Failed to load preferences, let the user know and stay on the settings page
           this.notifier.error("Couldn't connect to the specified server", 3000);
           break;
-        case SettingsError.PASSWORD:
-          // @ts-ignore
-        case SettingsError.UPDATE_PASSWORD: // NOSONAR
-          this.password_set = false;
         default:
           this.notifier.error("Failed to save settings", 3000);
           break;
       }
     });
-  }
-
-  public passwordChanged() {
-    this.password_set = this.new_password.length || false;
-  }
-
-  /**
-   * Update the password
-   * @param update_pat
-   * @private
-   */
-  private updatePassword(update_pat: boolean) {
-    this.password_set = this.new_password.length;
-    if (!update_pat) {
-      // Update the password and re-encrypt the current PAT using the key
-      return this._sw.sendMessage(SwMessageType.CHANGE_ENC_KEY, this.new_password).then(
-        cipher_text => {
-            if (cipher_text.data.status) {
-              return this.savePat(cipher_text.data.host_pat).then(status => (status || SettingsError.UPDATE_PASSWORD), () => SettingsError.UPDATE_PASSWORD);
-            }
-            return SettingsError.UPDATE_PASSWORD
-        },
-        () => SettingsError.UPDATE_PASSWORD
-      );
-    } else {
-      // Update the password but don't bother re-encrypting the PAT since we are updating it anyway
-      return this._sw.sendMessage(SwMessageType.SET_ENC_KEY, this.new_password).then(
-        cipher_text => {
-          if (cipher_text.data.status) {
-            return this.savePat(cipher_text.data.host_pat).then(status => (status || SettingsError.PASSWORD), () => SettingsError.PASSWORD);
-          }
-          return SettingsError.PASSWORD
-        },
-        () => SettingsError.PASSWORD
-      );
-    }
-  }
-
-  private savePat(new_cipher_text: any) {
-    this.settings.set("host_pat", new_cipher_text);
-    return this.settings.save().then(
-      () => true,
-      () => false
-    );
-  }
-
-  /**
-   * Update the stored Personal Access Token
-   *
-   * @private
-   */
-  private updatePat() {
-    return this._sw.sendMessage(SwMessageType.ENCRYPT_PAT, this.new_pat).then(cipher_text => {
-      if (cipher_text.data.status) {
-        return this.savePat(cipher_text.data.host_pat).then(
-          status => {
-            return this._sw.sendMessage(SwMessageType.UNLOCK).then(
-              unlocked => (status || SettingsError.PAT),
-              () => SettingsError.PAT
-            )
-          },
-          () => SettingsError.PAT
-        );
-      }
-      return SettingsError.PAT;
-    })
   }
 
   /**

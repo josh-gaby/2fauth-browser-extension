@@ -1,27 +1,16 @@
 const APP_STORE_KEY = '2fauth-app-settings',
-  KEY_STORE_KEY = '2fauth-enc-key',
-  ENC_STORE_KEY = '2fauth-enc-details',
   STATE_STORE_KEY = '2fauth-state',
-  decoder = new TextDecoder(),
-  encoder = new TextEncoder(),
   _browser = (typeof browser === "undefined") ? chrome : browser,
   _crypto = (typeof window === "undefined") ? crypto : window.crypto,
   default_state = {
     loaded: false,
     locked: true,
     last_active: null,
-    lock_type: false,
-    pat: ''
+    lock_type: false
   };
 
 let ext_client,
-    enc_details = {
-      default: true,
-      salt: null,
-      iv: null
-    },
     state = {...default_state};
-
 
 _browser.windows.onRemoved.addListener(handleBrowserClosed);
 _browser.runtime.onStartup.addListener(handleStartup);
@@ -55,23 +44,8 @@ function handleBrowserClosed(window_id) {
 function handleMessages(message, sender, response) {
   const message_type = message.type ? message.type : undefined;
   switch (message_type) {
-    case 'GET-PAT':
-      getPat().then(data => response(data));
-      break;
-    case 'CHECK-LOCKED':
-      isLocked().then(data => response(data));
-      break;
-    case 'SET-ENC-KEY':
-      setEncKey(message.payload).then(data => response(data));
-      break;
-    case 'CHANGE-ENC-KEY':
-      changeEncKey(message.payload).then(data => response(data));
-      break;
     case 'UNLOCK-EXT':
       unlockExt().then(data => response(data));
-      break;
-    case 'ENCRYPT-PAT':
-      encryptPat(message.payload).then(data => response(data));
       break;
     case 'SET-LOCK-TYPE':
       setLockType(message.payload).then(data => response(data));
@@ -174,8 +148,9 @@ function loadState() {
    */
   function _checkLock() {
     if (state.lock_type > 0 && state.last_active !== null && ((Date.now() - state.last_active) / 60000) > state.lock_type) {
-      state.pat = '';
-      state.locked = true;
+      return lockNow();
+    } else {
+      return Promise.resolve(true);
     }
   }
 
@@ -191,12 +166,10 @@ function loadState() {
             if (settings !== null) {
               state.lock_type = settings.lock_timeout;
             }
-            _checkLock();
-            return true;
+            return _checkLock().then(() => true);
           }, () => false)
         } else {
-          _checkLock();
-          return true;
+          return _checkLock().then(() => true);
         }
       } else {
         return loadDefaultState();
@@ -239,13 +212,18 @@ function loadDefaultState() {
  */
 function lockNow() {
   state.locked = true;
-  state.pat = '';
-  storeState().then(() => {
-    // Clear the encryption key
-    _browser.storage.local.set({[KEY_STORE_KEY]: null}).then(() => {
-      // Clear the alarm so it doesn't fire again
-      _browser.alarms.clear('lock-extension');
-    })
+  return storeState().then(() => {
+    return _browser.storage.local.get(APP_STORE_KEY).then(settings => {
+      settings = settings[APP_STORE_KEY];
+      settings.access_token = null;
+      settings.refresh_token = null;
+      settings.expiry_time = null;
+      settings.locked = true;
+      return _browser.storage.local.set({[APP_STORE_KEY]: settings}).then(() => {
+        // Clear the alarm so it doesn't fire again
+        return _browser.alarms.clear('lock-extension');
+      });
+    });
   })
 }
 
@@ -260,64 +238,6 @@ function setLockTimer() {
       lockNow();
     }
   }
-}
-
-/**
- * Get the Personal Access Token
- *
- * @returns {Promise<Awaited<{pat: string, status: boolean}>>}
- */
-function getPat() {
-  return Promise.resolve({status: true, pat: state.pat});
-}
-
-/**
- * Check if the extension is currently or should be locked
- *
- * @returns {Promise<{[p: string]: any} | {locked: boolean}>}
- */
-function isLocked() {
-  // This is triggered each time the extension loads, so we will use it as a point to load/generate the salt and iv for encryption
-  return loadState().then(() => {
-    return _browser.storage.local.get({[ENC_STORE_KEY]: null}).then(details => {
-      if (details && details.hasOwnProperty(ENC_STORE_KEY) && details[ENC_STORE_KEY]) {
-        enc_details.iv = new Uint8Array(details[ENC_STORE_KEY].iv);
-        enc_details.salt = new Uint8Array(details[ENC_STORE_KEY].salt);
-        enc_details.default = details[ENC_STORE_KEY].default ?? true;
-        return new Promise(resolve => resolve())
-      } else {
-        enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
-        enc_details.salt = _crypto.getRandomValues(new Uint8Array(16));
-        enc_details.default = true;
-        // Store the generated salt + iv (the iv is re-generated every time the pat is encrypted)
-        return _browser.storage.local.set({
-          [ENC_STORE_KEY]: {
-            iv: Array.apply(null, new Uint8Array(enc_details.iv)), salt: Array.apply(null, new Uint8Array(enc_details.salt)), default: enc_details.default
-          }
-        });
-      }
-    }, () => new Promise(resolve => resolve()));
-  }).then(() => {
-    return _browser.storage.local.get({[APP_STORE_KEY]: {}}).then(settings => {
-      let return_value = {locked: false};
-
-      // The extension can only be locked if there is a PAT present in the settings and the user has set a password
-      if (settings.hasOwnProperty(APP_STORE_KEY) && settings[APP_STORE_KEY].hasOwnProperty('host_pat')) {
-        return_value.locked = settings[APP_STORE_KEY]['host_pat'].length > 0 && state.locked === true;
-      }
-      // If the user has not set a password and locked is true, unlock the PAT using a null key
-      if (return_value.locked === true && enc_details.default === true) {
-        return unlockExt().then(status => {
-          return_value.locked = false;
-          return return_value;
-        })
-      } else {
-        return return_value;
-      }
-    }, () => {
-      return {locked: false};
-    });
-  });
 }
 
 /**
@@ -342,154 +262,8 @@ function resetExt() {
  * @returns {Promise<{[p: string]: any} | {status: boolean}>}
  */
 function unlockExt() {
-  return _browser.storage.local.get({[APP_STORE_KEY]: {}}).then(settings => {
-    if (!settings || settings.hasOwnProperty(APP_STORE_KEY) === false) {
-      return {status: true};
-    }
-    state.pat = settings[APP_STORE_KEY]['host_pat'] || '';
-    return getEncKey().then(key_to_use => {
-      return deriveKey(key_to_use, enc_details.salt).then(enc_key => {
-        return decryptPat(state.pat, enc_key).then(clear_text => {
-          if (clear_text !== 'decryption error') {
-            state.pat = clear_text;
-            state.locked = false;
-            return _browser.alarms.clear('lock-extension').then(() => {
-              return {status: true}
-            }, () => {
-              return {status: true}
-            });
-          } else {
-            return {status: false};
-          }
-        }, () => {
-          return {status: false}
-        });
-      }, () => {
-        return {status: false}
-      });
-    }, () => {
-      return {status: false}
-    });
-  }, () => {
-    return {status: false}
-  });
-}
-
-/**
- * Set the encryption key to be used by unlockExt
- *
- * @param key
- * @returns {Promise<{status: boolean} | {status: boolean}>}
- */
-function setEncKey(key) {
-  return _browser.storage.local.set({[KEY_STORE_KEY]: key}).then(() => {
-    return {status: true}
-  }, () => {
-    return {status: false}
-  });
-}
-
-/**
- * Get the currently stored encryption key
- *
- * @returns {Promise<{[p: string]: any}>}
- */
-function getEncKey() {
-  return _browser.storage.local.get({[KEY_STORE_KEY]: null}).then(key_data => key_data[KEY_STORE_KEY], () => null);
-}
-
-/**
- * Set a new encryption key and re-encrypt PAT using the new key
- *
- * @param key
- * @returns {Promise<* | {host_pat: null, status: boolean}>}
- */
-function changeEncKey(key) {
-  return this.setEncKey(key).then(() => this.encryptPat(state.pat), () => {
-    return {status: false, host_pat: null}
-  });
-}
-
-/**
- * Decrypt the PAT using the currently stored key
- *
- * @param cipher_text
- * @param enc_key
- * @returns {Promise<Awaited<string>>|Promise<T | string>}
- */
-function decryptPat(cipher_text, enc_key) {
-  const failed_promise = Promise.resolve('decryption error');
-  if (enc_key && cipher_text) {
-    try {
-      return _crypto.subtle.decrypt({
-        name: "AES-GCM", iv: enc_details.iv
-      }, enc_key, new Uint8Array(cipher_text)).then(decoded_buffer => {
-        try {
-          return decoder.decode(new Uint8Array(decoded_buffer));
-        } catch (e) {
-          return failed_promise
-        }
-      }, () => failed_promise);
-    } catch (e) {
-      return failed_promise
-    }
-  }
-
-  return failed_promise
-}
-
-/**
- * Derive the encryption key from the users password
- *
- * @param key
- * @param salt
- * @returns {Promise<CryptoKey>}
- */
-function deriveKey(key, salt) {
-  return _crypto.subtle.importKey("raw", encoder.encode(key), "PBKDF2", false, ["deriveBits", "deriveKey"]).then(
-    key_material => {
-      return _crypto.subtle.deriveKey({
-        name: "PBKDF2", salt: encoder.encode(salt), iterations: 100000, hash: "SHA-256"
-      }, key_material, {
-        name: "AES-GCM", length: 256
-      }, true, ["encrypt", "decrypt"]);
-    }
-  );
-}
-
-/**
- * Encrypt the PAT using the currently stored encryption key
- *
- * @param pat_clear
- * @returns {Promise<{[p: string]: any}>}
- */
-function encryptPat(pat_clear) {
-  return _browser.storage.local.get({[KEY_STORE_KEY]: null}).then(details => {
-    try {
-      if (details && details.hasOwnProperty(KEY_STORE_KEY)) {
-        return deriveKey(details[KEY_STORE_KEY], enc_details.salt).then(enc_key => {
-          enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
-          enc_details.default = details[KEY_STORE_KEY] === null;
-          return _browser.storage.local.set({
-            [ENC_STORE_KEY]: {
-              iv: Array.apply(null, new Uint8Array(enc_details.iv)), salt: Array.apply(null, new Uint8Array(enc_details.salt)), default: enc_details.default
-            }
-          }).then(() => {
-            return _crypto.subtle.encrypt({
-              name: "AES-GCM", iv: enc_details.iv
-            }, enc_key, encoder.encode(pat_clear).buffer).then(ciphertext => {
-              return {status: true, host_pat: Array.apply(null, new Uint8Array(ciphertext))}
-            }, () => {
-              return {status: false, host_pat: null};
-            });
-          });
-        });
-      }
-    } catch (e) {
-      // Do nothing
-    }
-    return {status: false, host_pat: null};
-  });
+  state.locked = false;
+  return Promise.resolve({status: true});
 }
 
 /**

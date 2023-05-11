@@ -20,15 +20,17 @@ export class TokenInterceptorService implements HttpInterceptor {
    * @param next
    */
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    let pat = this.settings.get('decoded_pat');
-    if (pat) {
-      request = request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${pat}`,
-          'Content-Type': 'application/json',
-        },
-      });
+    const add_bearer = request.url.match('.*/api/v1/.*') !== null;
+    let pat = this.settings.get('access_token'),
+        headers: any= {
+          'Content-Type': 'application/json'
+        };
+    if (add_bearer && pat) {
+      headers['Authorization'] = `Bearer ${pat}`;
     }
+
+    request = request.clone({setHeaders: headers});
+
     return next.handle(request).pipe(
       catchError((err) => {
         if (err.status === 401 || err.status === 403) {
