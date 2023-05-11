@@ -1,11 +1,13 @@
 import {Component} from '@angular/core';
-import {Router} from "@angular/router";
+import {NavigationCancel, NavigationEnd, NavigationError, Router} from "@angular/router";
 import {ServiceWorkerService} from "./Services/serviceworker/serviceworker.service";
 import {SwMessageType} from "./Models/message";
 import {runtime} from "webextension-polyfill";
 import {InitializerService} from "./Services/initializer/initializer.service";
 import {SettingsClass} from "./Models/settings";
 import {SettingsService} from "./Services/settings/settings.service";
+import {filter} from "rxjs";
+import {LoaderService} from "./Services/loader/loader.service";
 
 @Component({
   selector: 'app-root', templateUrl: './app.component.html', styleUrls: ['./app.component.scss']
@@ -14,6 +16,7 @@ export class AppComponent {
   title = '2FAuth';
 
   constructor(private initializer: InitializerService,
+              private loader: LoaderService,
               private router: Router,
               private settings: SettingsService,
               private _sw: ServiceWorkerService,
@@ -28,5 +31,12 @@ export class AppComponent {
     } else {
       this.initializer.initApp();
     }
+  }
+
+  ngOnInit() {
+    this.router.events.pipe(filter(event => event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError))
+      .subscribe(e => {
+        this.loader.hideLoader();
+      });
   }
 }

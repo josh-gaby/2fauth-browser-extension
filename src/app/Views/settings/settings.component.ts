@@ -13,6 +13,7 @@ import {InitializerService} from "../../Services/initializer/initializer.service
 import {AccountCacheService} from "../../Services/accountcache/accountcache.service";
 import {SettingsClass} from "../../Models/settings";
 import {PreferencesClass} from "../../Models/preferences";
+import {LoaderService} from "../../Services/loader/loader.service";
 
 enum SettingsError {
   SERVER_ACCESS = -1,
@@ -49,6 +50,7 @@ export class SettingsComponent {
               private account_cache: AccountCacheService,
               private api: ApiService,
               private initializer: InitializerService,
+              private loader: LoaderService,
               private notifier: NotificationService,
               private preferences: PreferencesService,
               private router: Router,
@@ -96,6 +98,7 @@ export class SettingsComponent {
     // If the server details have changed, test that they can be used to access the server
     if (server_details_changed) {
       // TODO: Request the users password using a popup instead of a standard input
+      this.loader.showLoader();
       first = this.api.requestAccessToken(this.password).then(
         results => {
           return (results || SettingsError.SERVER_ACCESS)
@@ -105,6 +108,7 @@ export class SettingsComponent {
         }
       )
     } else {
+      this.loader.showLoader();
       first = Promise.resolve(true);
     }
 
@@ -131,15 +135,15 @@ export class SettingsComponent {
           });
           break;
         case SettingsError.SERVER_ACCESS:
+          this.loader.hideLoader();
           this.settings.set('host_url', old_url);
           this.settings.set('client_id', old_client_id);
           this.settings.set('client_secret', old_client_secret);
           this.settings.set('username', old_username);
-
-          // Failed to load preferences, let the user know and stay on the settings page
           this.notifier.error("Couldn't connect to the specified server", 3000);
           break;
         default:
+          this.loader.hideLoader();
           this.notifier.error("Failed to save settings", 3000);
           break;
       }

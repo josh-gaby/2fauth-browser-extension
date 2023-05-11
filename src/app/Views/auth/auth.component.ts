@@ -7,6 +7,7 @@ import {InitializerService} from "../../Services/initializer/initializer.service
 import {faUnlock} from "@fortawesome/free-solid-svg-icons/faUnlock";
 import {NotificationService} from "../../Services/notification/notification.service";
 import {ApiService} from "../../Services/api/api.service";
+import {LoaderService} from "../../Services/loader/loader.service";
 
 @Component({
   selector: 'app-auth',
@@ -20,6 +21,7 @@ export class AuthComponent {
   constructor(private _sw: ServiceWorkerService,
               private api: ApiService,
               private initializer: InitializerService,
+              private loader: LoaderService,
               private notifier: NotificationService,
               private settings: SettingsService,
               private router: Router
@@ -27,6 +29,7 @@ export class AuthComponent {
 
   unlock() {
     if (this.password && this.password.length > 0) {
+      this.loader.showLoader();
       this.api.requestAccessToken(this.password).then(response => {
         if (response) {
           this.settings.set('locked', false);
