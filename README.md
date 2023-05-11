@@ -7,7 +7,7 @@ Eventually this branch will be merged into master but until the 2FAuth interface
 
 The steps are easy so if you want to try it out, you just need to do the following:
 1. Checkout the `password-grant-workflow` branch.
-2. Build the version you want using either `npm run build:chrome` or `npm run build:firefox` and install it in your browser following the instructions below. 
+2. Build the version you want using either `npm run build:chrome` or `npm run build:firefox` and install it in your browser following the instructions further down the page. 
 3. Change to your 2FAuth instance.
 1. Run `php artisan passport:client --password` from the root folder of your 2FAuth install.
 2. Enter a name for your client.
