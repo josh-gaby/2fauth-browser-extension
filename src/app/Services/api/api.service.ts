@@ -92,14 +92,6 @@ export class ApiService {
     return this.http.get<Otp>(`${this.getApiUrl()}twofaccounts/${account_id}/otp`);
   }
 
-  groups() {
-    // TODO
-  }
-
-  icons() {
-    // TODO
-  }
-
   public refreshToken() {
     return new Promise<boolean>(resolve => {
         const url = `${this.getOauthUrl()}token`,
@@ -130,8 +122,6 @@ export class ApiService {
         });
     });
   }
-
-
 
   public requestAccessToken(password: string = '') {
     return new Promise<boolean>(resolve => {
