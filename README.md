@@ -9,11 +9,11 @@ The steps are easy so if you want to try it out, you just need to do the followi
 1. Checkout the `password-grant-workflow` branch.
 2. Build the version you want using either `npm run build:chrome` or `npm run build:firefox` and install it in your browser following the instructions further down the page. 
 3. Change to your 2FAuth instance.
-1. Run `php artisan passport:client --password` from the root folder of your 2FAuth install.
-2. Enter a name for your client.
-3. Select `[0] users` to allow your users to login using the client.
-4. Copy the generated ID and secret into the Client ID and Client Secret fields in the extension.
-5. Enter your host URL, username, and password into the extension and click save.
+4. Run `php artisan passport:client --password` from the root folder of your 2FAuth install.
+5. Enter a name for your client.
+6. Select `[0] users` to allow your users to login using the client.
+7. Copy the generated ID and secret into the Client ID and Client Secret fields in the extension.
+8. Enter your host URL, username, and password into the extension and click save.
 
    I will be replacing the password field on the settings page with a popup password prompt in the future, the password entered in step 5 will not be saved, it is just being used to connect to 2FAuth to confirm the entered information is valid and to get an initial access token.
 
