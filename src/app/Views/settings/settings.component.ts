@@ -13,6 +13,7 @@ import {InitializerService} from "../../Services/initializer/initializer.service
 import {AccountCacheService} from "../../Services/accountcache/accountcache.service";
 import {SettingsClass} from "../../Models/settings";
 import {PreferencesClass} from "../../Models/preferences";
+import {LoaderService} from "../../Services/loader/loader.service";
 
 enum SettingsError {
   SERVER_ACCESS = -1,
@@ -52,6 +53,7 @@ export class SettingsComponent {
               private account_cache: AccountCacheService,
               private api: ApiService,
               private initializer: InitializerService,
+              private loader: LoaderService,
               private notifier: NotificationService,
               private preferences: PreferencesService,
               private router: Router,
@@ -112,6 +114,7 @@ export class SettingsComponent {
     }
 
     // Test the provided server details
+    this.loader.showLoader();
     this.api.checkAccess().then(
       results => {
         return (results || SettingsError.SERVER_ACCESS)
@@ -156,6 +159,7 @@ export class SettingsComponent {
           });
           break;
         case SettingsError.SERVER_ACCESS:
+          this.loader.hideLoader();
           this.settings.set('host_url', old_url);
           this.settings.set('decoded_pat', old_pat);
           // Failed to load preferences, let the user know and stay on the settings page
@@ -166,6 +170,7 @@ export class SettingsComponent {
         case SettingsError.UPDATE_PASSWORD: // NOSONAR
           this.password_set = false;
         default:
+          this.loader.hideLoader();
           this.notifier.error("Failed to save settings", 3000);
           break;
       }

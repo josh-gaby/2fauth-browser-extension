@@ -6,6 +6,7 @@ import {Router} from "@angular/router";
 import {InitializerService} from "../../Services/initializer/initializer.service";
 import {faUnlock} from "@fortawesome/free-solid-svg-icons/faUnlock";
 import {NotificationService} from "../../Services/notification/notification.service";
+import {LoaderService} from "../../Services/loader/loader.service";
 
 @Component({
   selector: 'app-auth',
@@ -18,6 +19,7 @@ export class AuthComponent {
   protected readonly faUnlock = faUnlock;
   constructor(private _sw: ServiceWorkerService,
               private initializer: InitializerService,
+              private loader: LoaderService,
               private notifier: NotificationService,
               private settings: SettingsService,
               private router: Router
@@ -25,6 +27,7 @@ export class AuthComponent {
 
   unlock() {
     if (this.enc_key && this.enc_key.length > 0) {
+      this.loader.showLoader();
       this._sw.sendMessage(SwMessageType.SET_ENC_KEY, this.enc_key).then(response => {
         if (response.data.status) {
           this._sw.sendMessage(SwMessageType.UNLOCK).then(response => {
@@ -42,6 +45,7 @@ export class AuthComponent {
   }
 
   handleFailedLogin() {
+    this.loader.hideLoader();
     this.notifier.error('Authentication failed.', 3000)
   }
 }
