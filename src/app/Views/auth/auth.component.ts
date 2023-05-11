@@ -46,6 +46,7 @@ export class AuthComponent {
   }
 
   handleFailedLogin() {
+    this.loader.hideLoader();
     this.notifier.error('Authentication failed.', 3000)
   }
 }
