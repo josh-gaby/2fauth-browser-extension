@@ -253,10 +253,11 @@ function lockNow() {
  * Enable the lock timer
  */
 function setLockTimer() {
-  if (state.lock_type !== null && state.lock_type !== -1) {
-    if (state.lock_type > 0) {
-      _browser.alarms.create('lock-extension', {delayInMinutes: state.lock_type});
-    } else if (state.lock_type === 0) {
+  if (state.lock_type !== null && state.lock_type !== 'null') {
+    const lock_type = parseInt(state.lock_type);
+    if (lock_type > 0) {
+      _browser.alarms.create('lock-extension', {delayInMinutes: lock_type});
+    } else if (lock_type === 0) {
       lockNow();
     }
   }
