@@ -1,6 +1,6 @@
 {
   "name": "2fauth-chrome",
-  "version": "2023.5.0",
+  "version": "2024.3.0",
   "scripts": {
     "ng": "ng",
     "build:chrome": "ng build -c development,chrome",
@@ -48,6 +48,6 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.0.0",
     "typescript": "~4.9.4",
-    "web-ext": "^7.6.2"
+    "web-ext": "^7.2.0"
   }
 }
