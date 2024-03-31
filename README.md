@@ -17,6 +17,17 @@ The settings currently used include:
 - Copy OTP on display
 - Close OTP after copy
 
+## Installation
+
+### Firefox
+#### Option 1:
+View the extension in the [Mozilla Add-On store](https://addons.mozilla.org/en-US/firefox/addon/2fauth/) and click the "Add to Firefox" button.
+#### Option 2:
+Download the firefox xpi for the latest release from [here](https://github.com/josh-gaby/2fauth-browser-extension/releases) and open in Firefox.
+
+### Chrome
+~~View the extension in the [Chrome Extension store](https://chromewebstore.google.com) and click the "Add to Chrome" button.~~
+Pending Google approval, will update when possible.
 
 ## Installing from this repository
 
