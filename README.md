@@ -17,22 +17,24 @@ The settings currently used include:
 - Copy OTP on display
 - Close OTP after copy
 
-## Installation
+## Simple Installation
 
 ### Firefox
 #### Option 1:
 View the extension in the [Mozilla Add-On store](https://addons.mozilla.org/en-US/firefox/addon/2fauth/) and click the "Add to Firefox" button.
 #### Option 2:
-Download the firefox xpi for the latest release from [here](https://github.com/josh-gaby/2fauth-browser-extension/releases) and open in Firefox.
+Download the Firefox xpi for the latest release from [here](https://github.com/josh-gaby/2fauth-browser-extension/releases) and open in Firefox.
 
 ### Chrome
-~~View the extension in the [Chrome Extension store](https://chromewebstore.google.com) and click the "Add to Chrome" button.~~
-Pending Google approval, will update when possible.
+#### Option 1:
+View the extension in the [Chrome Extension store](https://chromewebstore.google.com/detail/2fauth/oplibojgambbikkdocijojhbdgdgealg) and click the "Add to Chrome" button.
+#### Option 2:
+Download the Chrome crx for the latest release from [here](https://github.com/josh-gaby/2fauth-browser-extension/releases), open `chrome://extensions` and drag the downloaded file onto the page.
 
-## Installing from this repository
+## Development Installation
 
 ### Firefox
-1. Download the latest [Firefox release](https://github.com/josh-gaby/2fauth-browser-extension/releases)
+1. Download the latest [Firefox release](https://github.com/josh-gaby/2fauth-browser-extension/releases) or build using the instructions below.
 2. Disable the Firefox extension signing requirement.
 
    Firefox [Extended Support Release (ESR)](https://www.mozilla.org/firefox/organizations/), Firefox [Developer Edition](https://www.mozilla.org/firefox/developer/) and [Nightly](https://nightly.mozilla.org/) versions of Firefox will allow you to override this setting by changing the preference `xpinstall.signatures.required` to `false` in the `about:config` page.
@@ -40,14 +42,14 @@ Pending Google approval, will update when possible.
 
 
 ### Chrome
-1. Download and extract the latest [Chrome release](https://github.com/josh-gaby/2fauth-browser-extension/releases)
+1. Download and extract the latest [Chrome release](https://github.com/josh-gaby/2fauth-browser-extension/releases) or build using the instructions below.
 2. Enable Developer Mode in Chrome.
 
    You can do this using the Developer Mode toggle in `chrome://extensions`.
 3. Click the `Load Unpacked` button and select the folder you extracted the extension to.
 
 
-## Development 
+## Development
 
 ### Requirements
 
