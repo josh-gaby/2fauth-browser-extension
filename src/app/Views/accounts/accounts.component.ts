@@ -28,7 +28,6 @@ export class AccountsComponent {
 
   public filterAccounts() {
     this.is_searching = this.search.length > 0;
-    console.log(this.search);
     this.filtered_accounts = [];
     for (let account of this.accounts_cache.data) {
       if (account.service.search(new RegExp(this.search, "i")) !== -1 || account.account.search(new RegExp(this.search, "i")) !== -1) {
