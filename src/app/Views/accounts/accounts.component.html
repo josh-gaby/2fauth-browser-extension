@@ -3,7 +3,7 @@
   <div class="center has-search">
     <span id="search-wrapper">
       <fa-icon [icon]="faSearch"></fa-icon>
-      <input autofocus type="text" id="search-field" [(ngModel)]="this.search" (keyup)="filterAccounts()"/>
+      <input appAutoFocus type="text" id="search-field" [(ngModel)]="this.search" (keyup)="filterAccounts()"/>
     </span>
   </div>
   <div class="right">
@@ -17,7 +17,7 @@
   <div class="tfa-list" *ngIf="accounts_cache.data?.length !== 0 && !is_searching">
     <div *ngFor="let account of accounts_cache.data" class="tfa-container tfa-cell tfa-text" routerLink="/accounts/{{account.id}}" [state]="{data: account}">
       <div class="tfa-top">
-        <img *ngIf="preferences.get('showAccountsIcons') && account.icon" src="{{account.icon_src}}" />
+        <img *ngIf="preferences.get('showAccountsIcons') && account.icon" src="{{account.icon_src}}" alt="{{account.service}}"/>
         <span class="tfa-service">{{account.service}}</span>
       </div>
       <div class="tfa-bottom has-grey-text">
@@ -28,7 +28,7 @@
   <div class="tfa-list" *ngIf="filtered_accounts.length !== 0 && is_searching">
     <div *ngFor="let account of filtered_accounts" class="tfa-container tfa-cell tfa-text" routerLink="/accounts/{{account.id}}" [state]="{data: account}">
       <div class="tfa-top">
-        <img *ngIf="preferences.get('showAccountsIcons') && account.icon" src="{{account.icon_src}}" />
+        <img *ngIf="preferences.get('showAccountsIcons') && account.icon" src="{{account.icon_src}}" alt="{{account.service}}"/>
         <span class="tfa-service">{{account.service}}</span>
       </div>
       <div class="tfa-bottom has-grey-text">
