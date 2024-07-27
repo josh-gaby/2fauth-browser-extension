@@ -22,6 +22,8 @@ import {ServiceWorkerService} from "./Services/serviceworker/serviceworker.servi
 import {AuthComponent} from './Views/auth/auth.component';
 import {LoaderComponent} from "./Components/loader/loader.component";
 import {LoaderService} from "./Services/loader/loader.service";
+import {AutoFocusDirective} from "./Directives/auto-focus.directive";
+import {NgOptimizedImage} from "@angular/common";
 
 /**
  * Make sure that we have loaded all settings from storage before the app loads
@@ -34,7 +36,7 @@ function initializeApp(service: InitializerService): Function {
 
 @NgModule({
   declarations: [AppComponent, SettingsComponent, AccountsComponent, OtpDisplayerComponent, NotificationComponent, AuthComponent, LoaderComponent],
-  imports: [AppRoutingModule, BrowserModule, HttpClientModule, FormsModule, FontAwesomeModule ],
+  imports: [AppRoutingModule, BrowserModule, HttpClientModule, FormsModule, FontAwesomeModule, AutoFocusDirective, NgOptimizedImage],
   providers: [
     {provide: APP_INITIALIZER, useFactory: initializeApp, deps: [InitializerService], multi: true},
     {provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true,},
