@@ -293,7 +293,7 @@ function isLocked() {
         // Store the generated salt + iv (the iv is re-generated every time the pat is encrypted)
         return _browser.storage.local.set({
           [ENC_STORE_KEY]: {
-            iv: Array.apply(null, new Uint8Array(enc_details.iv)), salt: Array.apply(null, new Uint8Array(enc_details.salt)), default: enc_details.default
+            iv: Array(...new Uint8Array(enc_details.iv)), salt: Array(...new Uint8Array(enc_details.salt)), default: enc_details.default
           }
         });
       }
@@ -473,13 +473,13 @@ function encryptPat(pat_clear) {
           enc_details.default = details[KEY_STORE_KEY] === null;
           return _browser.storage.local.set({
             [ENC_STORE_KEY]: {
-              iv: Array.apply(null, new Uint8Array(enc_details.iv)), salt: Array.apply(null, new Uint8Array(enc_details.salt)), default: enc_details.default
+              iv: Array(...new Uint8Array(enc_details.iv)), salt: Array(...new Uint8Array(enc_details.salt)), default: enc_details.default
             }
           }).then(() => {
             return _crypto.subtle.encrypt({
               name: "AES-GCM", iv: enc_details.iv
             }, enc_key, encoder.encode(pat_clear).buffer).then(ciphertext => {
-              return {status: true, host_pat: Array.apply(null, new Uint8Array(ciphertext))}
+              return {status: true, host_pat: Array(...new Uint8Array(ciphertext))}
             }, () => {
               return {status: false, host_pat: null};
             });
