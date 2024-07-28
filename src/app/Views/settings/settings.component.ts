@@ -226,21 +226,20 @@ export class SettingsComponent {
    *
    * @private
    */
-  private updatePat() {
-    return this._sw.sendMessage(SwMessageType.ENCRYPT_PAT, this.new_pat).then(cipher_text => {
-      if (cipher_text.data.status) {
-        return this.savePat(cipher_text.data.host_pat).then(
-          status => {
-            return this._sw.sendMessage(SwMessageType.UNLOCK).then(
-              unlocked => (status || SettingsError.PAT),
-              () => SettingsError.PAT
-            )
-          },
-          () => SettingsError.PAT
-        );
-      }
-      return SettingsError.PAT;
-    })
+  private async updatePat(): Promise<boolean|SettingsError> {
+    const cipher_text = await this._sw.sendMessage(SwMessageType.ENCRYPT_PAT, this.new_pat);
+    if (cipher_text.data.status) {
+      return this.savePat(cipher_text.data.host_pat).then(
+        status => {
+          return this._sw.sendMessage(SwMessageType.UNLOCK).then(
+            unlocked => (status || SettingsError.PAT),
+            () => SettingsError.PAT
+          );
+        },
+        () => SettingsError.PAT
+      );
+    }
+    return SettingsError.PAT;
   }
 
   /**
@@ -248,7 +247,7 @@ export class SettingsComponent {
    *
    * @private
    */
-  private updateLockTimer() {
+  private updateLockTimer():Promise<any> {
     this.lock_timer = this.lock_timer === 'null' ? null : this.lock_timer as number;
     if (this.lock_timer !== this.original_lock_timer) {
       this.settings.set('lock_timeout', this.lock_timer);

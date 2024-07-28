@@ -19,9 +19,7 @@ export class AccountsComponent {
   public search: string  = '';
   public filtered_accounts:  Account[] = [];
 
-  constructor(public preferences: PreferencesService,
-              public accounts_cache: AccountCacheService,
-  ) {
+  constructor(public preferences: PreferencesService, public accounts_cache: AccountCacheService) {
     // Update the account cache
     this.accounts_cache.update();
   }
