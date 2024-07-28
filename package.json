@@ -10,8 +10,8 @@
     "dist:chrome": "ng build -c production,chrome,chrome-dist",
     "dist:firefox": "ng build -c production,firefox,firefox-dist",
     "dist": "npm run dist:chrome && npm run dist:firefox",
-    "package:firefox": "web-ext build -s ./dist/2fauth-firefox -a ./dist/packaged/firefox -o true",
-    "package:chrome": "web-ext build -s ./dist/2fauth-chrome -a ./dist/packaged/chrome -o true",
+    "package:firefox": "web-ext build -s ./dist/2fauth-firefox -a ./dist/packaged/firefox -n {name}-{version}-firefox.zip -o true",
+    "package:chrome": "web-ext build -s ./dist/2fauth-chrome -a ./dist/packaged/chrome -n {name}-{version}-chrome.zip -o true",
     "package": "npm run bump-version && npm run dist && npm run package:chrome && npm run package:firefox"
   },
   "private": true,
