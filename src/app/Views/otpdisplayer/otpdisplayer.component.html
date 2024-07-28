@@ -1,6 +1,6 @@
 <main>
   <div class="tfa-container tfa-cell tfa-text">
-    <img *ngIf="preferences.get('showAccountsIcons') && account?.icon" src="{{account?.icon_src}}"/>
+    <img *ngIf="preferences.get('showAccountsIcons') && account?.icon" src="{{account?.icon_src}}" alt="{{account?.service}}"/>
     <div class="tfa-top">
       <span class="tfa-service">{{account?.service}}</span>
     </div>
@@ -9,7 +9,7 @@
     </div>
     <div class="tfa-password" *ngIf="formatted_password!==''" (click)="copyOTP(true)" (keyup.enter)="copyOTP(true)">{{formatted_password}}</div>
     <div class="tfa-loading" *ngIf="formatted_password==''">
-      <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>
+      <fa-icon [icon]="faSpinner" animation="spin"></fa-icon>
     </div>
     <ul class="tfa-dots" [hidden]="!isTimeBased(otp_type)">
       <li class="dot" *ngFor="let i of [].constructor(10)"></li>
