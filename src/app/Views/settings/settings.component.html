@@ -1,7 +1,7 @@
 <header>
   <div class="left">
-    <button *ngIf="!disable_back" type="button" routerLink="/accounts">
-      <fa-icon [icon]="faArrowLeftLong"></fa-icon>
+    <button type="button" routerLink="/accounts">
+      <fa-icon [icon]="faChevronLeft"></fa-icon>
       back
     </button>
   </div>
@@ -11,41 +11,18 @@
   <div class="right"></div>
 </header>
 <main>
-  <div class="theme-container field">
-    <span class="label has-grey-text" id="theme-label">Theme</span>
-    <div class="buttons">
-      <button *ngFor="let theme of themes" (click)="setTheme(theme.value)" type="button" class="button is-dark" aria-labelledby="theme-label" [ngClass]="{'is-link': current_theme === theme.value}">
-        <fa-icon [icon]="theme.icon"></fa-icon> {{theme.text}}
-      </button>
-    </div>
-  </div>
-  <div class="container field">
-    <label class="has-grey-text" for="host_url">Host Url</label>
-    <input type="text" class="input" placeholder="Enter your host url" id="host_url" [(ngModel)]="this.host_url"/>
-  </div>
-  <div class="container field">
-    <label class="has-grey-text" for="token">Personal Access Token</label>
-    <textarea id="token" class="textarea" [(ngModel)]="this.new_pat" [placeholder]="(have_pat ? 'Existing Personal Access Token:\n' + starred_pat : 'Enter your Personal Access Token')"></textarea>
-  </div>
-  <div class="container field select">
-    <label class="has-grey-text" for="timeout-setting">2FAuth timeout</label>
-    <select [(ngModel)]="this.lock_timer" [disabled]="this.password_set === false" id="timeout-setting">
-      <option value="0">Immediately</option>
-      <option value="1">1 minute</option>
-      <option value="5">5 minutes</option>
-      <option value="15">15 minutes</option>
-      <option value="30">30 minutes</option>
-      <option value="60">1 hour</option>
-      <option value="240">4 hours</option>
-      <option value="null">Never</option>
-    </select>
-  </div>
-  <div class="container field">
-    <label class="has-grey-text" for="password">Password</label>
-    <input type="password" id="password" class="input" [placeholder]="password_set !== false ? starred_pass : 'Set a password'" [(ngModel)]="this.new_password" (change)="passwordChanged()"/>
-  </div>
-  <div class="field">
-    <button class="button is-link" (click)="saveSettings()">Save</button>
-    <button class="button is-link" style="margin-left: 10px;" (click)="clearStorage()">Reset</button>
+  <div class="settings-button-holder">
+    <button routerLink="/settings/account" class="settings-button">
+      <span class="contents">Account</span>
+      <span class="icon"><fa-icon class="icon" [icon]="faChevronRight"></fa-icon></span>
+    </button>
+    <button routerLink="/settings/appearance" class="settings-button">
+      <span class="contents">Appearance</span>
+      <span class="icon"><fa-icon class="icon" [icon]="faChevronRight"></fa-icon></span>
+    </button>
+    <button routerLink="/settings/about" class="settings-button">
+      <span class="contents">About</span>
+      <span class="icon"><fa-icon class="icon" [icon]="faChevronRight"></fa-icon></span>
+    </button>
   </div>
 </main>

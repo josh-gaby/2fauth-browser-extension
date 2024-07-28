@@ -34,7 +34,7 @@ export class TokenInterceptorService implements HttpInterceptor {
         if (err.status === 401 || err.status === 403) {
           this.notifier.error("Invalid Personal Access Token", 3000);
           this.api.invalid_token = true;
-          this.router.navigate(['/settings'], { state: { data: {disable_back: true} } });
+          this.router.navigate(['/settings/account'], { state: { data: {disable_back: true} } });
         }
         if (err.status === 404) {
           this.notifier.warning("Account missing");
