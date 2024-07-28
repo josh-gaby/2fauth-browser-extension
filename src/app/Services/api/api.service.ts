@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse} from '@angular/common/http';
+import {HttpClient, HttpErrorResponse, HttpResponse} from '@angular/common/http';
 import {Account} from "../../Models/account";
 import {Otp} from "../../Models/otp";
 import {IPref, Preferences} from "../../Models/preferences";
@@ -22,15 +22,20 @@ export class ApiService {
     this._invalid_token = value;
   }
 
+  /**
+   * Get a list of Accounts from the 2FAuth server
+   */
   public getAccounts(): Observable<Account[]> {
+    // Invalid token flag is set, return a blank list
     if (this._invalid_token) {
       return of([]);
     }
-    return this.http.get<Account[]>(this.getUrl() + 'twofaccounts').pipe(
+    // Request the accounts from the server
+    return this.http.get<Account[]>(this.getAPIUrl('twofaccounts')).pipe(
       switchMap(accounts => {
         let blobStateObservables = accounts.map(account => {
           if (account.icon !== null) {
-            return from(fetch(this.settings.get('host_url') + '/storage/icons/' + account.icon, {mode: 'no-cors'}).then((response: Response) => {
+            return from(fetch(this.getHostUrl(`storage/icons/${account.icon}`), {mode: 'no-cors'}).then((response: Response) => {
               return response.blob();
             })).pipe(
               map((blob: Blob) => {
@@ -39,7 +44,7 @@ export class ApiService {
                   account.icon_src = blob;
                 } else {
                   // Otherwise, store the icons url
-                  account.icon_src = this.settings.get('host_url') + '/storage/icons/' + account.icon;
+                  account.icon_src = this.getHostUrl(`storage/icons/${account.icon}`);
                 }
                 return account;
               })
@@ -68,6 +73,12 @@ export class ApiService {
     )
   }
 
+  /**
+   * Convert a Blob to a base64 string
+   *
+   * @param blob
+   * @private
+   */
   private blobToBase64(blob: Blob): Observable<string> {
     const reader = new FileReader();
     reader.readAsDataURL(blob);
@@ -79,19 +90,16 @@ export class ApiService {
     });
   }
 
+  /**
+   * Get the current OTP from the server
+   *
+   * @param account_id
+   */
   public getOtp(account_id: any): Observable<Otp> {
     if (this._invalid_token) {
       return of({} as Otp);
     }
-    return this.http.get<Otp>(`${this.getUrl()}twofaccounts/${account_id}/otp`);
-  }
-
-  groups() {
-    // TODO
-  }
-
-  icons() {
-    // TODO
+    return this.http.get<Otp>(this.getAPIUrl(`twofaccounts/${account_id}/otp`));
   }
 
   /**
@@ -102,7 +110,7 @@ export class ApiService {
       if (this._invalid_token) {
         resolve(false);
       }
-      let url = `${this.getUrl()}user/preferences`;
+      let url = this.getAPIUrl('user/preferences');
       this.http.get<HttpResponse<any>>(url, {observe: 'response'}).subscribe({
         next: response => {
           if (response.status >= 200 && response.status < 400) {
@@ -118,11 +126,14 @@ export class ApiService {
     })
   }
 
+  /**
+   * Retrieve the users preferences from the 2FAuth server
+   */
   public getPreferences(): Observable<Preferences> {
     if (this._invalid_token) {
       return of({} as Preferences);
     }
-    let url = `${this.getUrl()}user/preferences`;
+    let url = this.getAPIUrl('user/preferences');
     return this.http.get<IPref[]>(url).pipe(
       map((preferences: IPref[]) => {
         let _map = <any>{};
@@ -134,7 +145,23 @@ export class ApiService {
     );
   }
 
-  private getUrl(): string {
-    return this.settings.get('host_url') + '/api/v1/';
+  /**
+   * Get a URL for the 2FAuth server.
+   *
+   * @param relative_url
+   * @private
+   */
+  private getHostUrl(relative_url?: string): string {
+    return `${this.settings.get('host_url')}/${typeof relative_url !== 'undefined' ? relative_url : ''}`;
+  }
+
+  /**
+   * Get an API URL for the 2FAuth server.
+   *
+   * @param relative_url
+   * @private
+   */
+  private getAPIUrl(relative_url?: string): string {
+    return this.getHostUrl(`api/v1/${typeof relative_url !== 'undefined' ? relative_url : ''}`);
   }
 }
