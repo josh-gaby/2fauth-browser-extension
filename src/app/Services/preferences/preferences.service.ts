@@ -8,7 +8,7 @@ import {StorageService, StorageType} from "../storage/storage.service";
 })
 export class PreferencesService extends StorageService {
   constructor(zone: NgZone, @Optional() _preferences: PreferencesClass, private api: ApiService) {
-    let defaults = (_preferences)? _preferences : new PreferencesClass();
+    let defaults = (_preferences) || new PreferencesClass();
     super(zone, defaults);
     this.setStorageType(StorageType.local);
   }

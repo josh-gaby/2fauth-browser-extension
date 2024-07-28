@@ -42,7 +42,7 @@ export class ThemingService {
    * Defaults to 'system' if none has previously been saved
    */
   private getLastAppliedTheme(): string {
-    return localStorage.getItem('last-theme') || 'system';
+    return localStorage.getItem('last-theme') ?? 'system';
   }
 
   /**
