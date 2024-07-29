@@ -146,8 +146,9 @@ function handleStartup() {
 async function handleUpdates(details) {
   if (details.reason === 'update') {
     const prev_version = parseInt(details.previousVersion.replace('.', ''));
-    if (prev_version >= 202450) {
+    if (prev_version === 202450) {
       // Remove the now unused '2fauth-enc-key' storage item.
+      console.log("Removing old 2fauth-enc-key stored value...");
       await _browser.storage.local.remove('2fauth-enc-key');
     }
   }
