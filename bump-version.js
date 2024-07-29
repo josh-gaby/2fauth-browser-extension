@@ -1,4 +1,15 @@
 #!/usr/bin/env node
+const parseArgs = (args) => {
+  const parsedArgs = {};
+  args.forEach((arg) => {
+    const parts = arg.split("=");
+    parsedArgs[parts[0]] = parts[1];
+  });
+
+  return parsedArgs;
+};
+
+const args = parseArgs(process.argv.slice(2));
 
 const { writeFile, readFile, readFileSync } = require('fs');
 const pkg = JSON.parse(readFileSync('./package.json')),
@@ -16,7 +27,10 @@ if (major_minor !== `${major}.${minor}`) {
   patch++;
 }
 
-const new_version = `${major_minor}.${patch}`;
+let new_version = `${major_minor}.${patch}`;
+if (args.setPrefix) {
+  new_version += `.${args.setPrefix}`
+}
 
 console.log('Updating version: ', current_version, '=>', new_version);
 
