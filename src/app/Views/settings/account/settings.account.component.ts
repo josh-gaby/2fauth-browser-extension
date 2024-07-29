@@ -69,7 +69,7 @@ export class SettingsAccountComponent {
    * @private
    */
   private getStarredPat(): string {
-    let length = this.host_pat.length;
+    let length = this.host_pat?.length ?? 0;
     if (length === 0) {
       return '';
     }
