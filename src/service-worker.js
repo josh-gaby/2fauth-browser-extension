@@ -1,11 +1,11 @@
 const APP_STORE_KEY = '2fauth-app-settings',
-  KEY_STORE_KEY = '2fauth-enc-key',
   ENC_STORE_KEY = '2fauth-enc-details',
   STATE_STORE_KEY = '2fauth-state',
   decoder = new TextDecoder(),
   encoder = new TextEncoder(),
   _browser = (typeof browser === "undefined") ? chrome : browser,
   _crypto = (typeof window === "undefined") ? crypto : window.crypto,
+  enc_key = null,
   default_state = {
     loaded: false,
     locked: true,
@@ -22,10 +22,9 @@ let ext_client,
     },
     state = {...default_state};
 
-
 _browser.windows.onRemoved.addListener(handleBrowserClosed);
 _browser.runtime.onStartup.addListener(handleStartup);
-_browser.runtime.onInstalled.addListener(handleStartup);
+_browser.runtime.onInstalled.addListener(handleUpdates);
 _browser.runtime.onSuspend.addListener(handleClose);
 _browser.runtime.onMessage.addListener(handleMessages);
 _browser.alarms.onAlarm.addListener(handleAlarms);
@@ -142,6 +141,20 @@ function handleStartup() {
 }
 
 /**
+ * Handle update tasks
+ */
+async function handleUpdates(details) {
+  if (details.reason === 'update') {
+    const prev_version = parseInt(details.previousVersion.replace('.', ''));
+    if (prev_version >= 202450) {
+      // Remove the now unused '2fauth-enc-key' storage item.
+      await _browser.storage.local.remove('2fauth-enc-key');
+    }
+  }
+  handleStartup();
+}
+
+/**
  * Handle close events
  */
 function handleClose() {
@@ -242,10 +255,9 @@ function lockNow() {
   state.pat = '';
   storeState().then(() => {
     // Clear the encryption key
-    _browser.storage.local.set({[KEY_STORE_KEY]: null}).then(() => {
-      // Clear the alarm so it doesn't fire again
-      _browser.alarms.clear('lock-extension');
-    })
+    this.enc_key = null;
+    // Clear the alarm so it doesn't fire again
+    _browser.alarms.clear('lock-extension');
   })
 }
 
@@ -380,14 +392,11 @@ function unlockExt() {
  * Set the encryption key to be used by unlockExt
  *
  * @param key
- * @returns {Promise<{status: boolean} | {status: boolean}>}
+ * @returns {Promise<{status: boolean}>}
  */
 function setEncKey(key) {
-  return _browser.storage.local.set({[KEY_STORE_KEY]: key}).then(() => {
-    return {status: true}
-  }, () => {
-    return {status: false}
-  });
+  this.enc_key = key;
+  return Promise.resolve({status: true});
 }
 
 /**
@@ -396,7 +405,7 @@ function setEncKey(key) {
  * @returns {Promise<{[p: string]: any}>}
  */
 function getEncKey() {
-  return _browser.storage.local.get({[KEY_STORE_KEY]: null}).then(key_data => key_data[KEY_STORE_KEY], () => null);
+  return Promise.resolve(this.enc_key);
 }
 
 /**
@@ -465,32 +474,28 @@ function deriveKey(key, salt) {
  * @returns {Promise<{[p: string]: any}>}
  */
 function encryptPat(pat_clear) {
-  return _browser.storage.local.get({[KEY_STORE_KEY]: null}).then(details => {
-    try {
-      if (details && details.hasOwnProperty(KEY_STORE_KEY)) {
-        return deriveKey(details[KEY_STORE_KEY], enc_details.salt).then(enc_key => {
-          enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
-          enc_details.default = details[KEY_STORE_KEY] === null;
-          return _browser.storage.local.set({
-            [ENC_STORE_KEY]: {
-              iv: Array(...new Uint8Array(enc_details.iv)), salt: Array(...new Uint8Array(enc_details.salt)), default: enc_details.default
-            }
-          }).then(() => {
-            return _crypto.subtle.encrypt({
-              name: "AES-GCM", iv: enc_details.iv
-            }, enc_key, encoder.encode(pat_clear).buffer).then(ciphertext => {
-              return {status: true, host_pat: Array(...new Uint8Array(ciphertext))}
-            }, () => {
-              return {status: false, host_pat: null};
-            });
+  try {
+      return deriveKey(this.enc_key, enc_details.salt).then(enc_key => {
+        enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
+        enc_details.default = this.enc_key === null;
+        return _browser.storage.local.set({
+          [ENC_STORE_KEY]: {
+            iv: Array(...new Uint8Array(enc_details.iv)), salt: Array(...new Uint8Array(enc_details.salt)), default: enc_details.default
+          }
+        }).then(() => {
+          return _crypto.subtle.encrypt({
+            name: "AES-GCM", iv: enc_details.iv
+          }, enc_key, encoder.encode(pat_clear).buffer).then(ciphertext => {
+            return {status: true, host_pat: Array(...new Uint8Array(ciphertext))}
+          }, () => {
+            return {status: false, host_pat: null};
           });
         });
-      }
-    } catch (e) {
-      // Do nothing
-    }
-    return {status: false, host_pat: null};
-  });
+      });
+  } catch (e) {
+    // Do nothing
+  }
+  return Promise.resolve({status: false, host_pat: null});
 }
 
 /**
