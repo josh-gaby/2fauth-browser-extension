@@ -6,7 +6,17 @@ import {runtime} from "webextension-polyfill";
   providedIn: 'root'
 })
 export class ServiceWorkerService {
-  constructor() {}
+  constructor() {
+    // @ts-ignore
+    window['setDebug'] = (enable_debug: boolean) => {
+      this.sendMessage(SwMessageType.SET_DEBUG, enable_debug ? 'ON' : 'OFF')
+    };
+
+    // @ts-ignore
+    window['resetExtension'] = () => {
+      this.sendMessage(SwMessageType.RESET_EXT);
+    };
+  }
 
   async sendMessage(type: SwMessageType, payload: any = null): Promise<SwMessage> {
     let message = new SwMessage();

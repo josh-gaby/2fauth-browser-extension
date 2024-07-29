@@ -27,6 +27,7 @@ import {LoaderComponent} from "./Components/loader/loader.component";
 import {LoaderService} from "./Services/loader/loader.service";
 import {AutoFocusDirective} from "./Directives/auto-focus.directive";
 import {NgOptimizedImage} from "@angular/common";
+import {SwMessageType} from "./Models/message";
 
 
 /**
