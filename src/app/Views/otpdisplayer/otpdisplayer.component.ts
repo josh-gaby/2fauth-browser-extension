@@ -71,8 +71,8 @@ export class OtpDisplayerComponent {
   public copyOTP(permit_closing: boolean = false) {
     if (this.otp !== null) {
       const success = this._clipboard.copy(this.otp.password);
-      if (success == true) {
-        if (this.preferences.get('closeOtpOnCopy') && permit_closing === true) {
+      if (success) {
+        if (this.preferences.get('closeOtpOnCopy') && permit_closing) {
           window.close();
         } else {
           this.notifications.success("Copied to clipboard", 3000);
@@ -132,8 +132,8 @@ export class OtpDisplayerComponent {
    */
   private clearOTP() {
     this.stopLoop()
-    this.otp, this.account, this._lastActiveDot, this._remainingTimeout, this._firstDotToNextOneTimeout, this._dotToDotInterval = null;
-    this.formatted_password, this.otp_type = '';
+    this.otp = this.account = this._lastActiveDot = this._remainingTimeout = this._firstDotToNextOneTimeout = this._dotToDotInterval = null;
+    this.formatted_password = this.otp_type = '';
     try {
       this._element.nativeElement.querySelector('[data-is-active]').removeAttribute('data-is-active');
       this._element.nativeElement.querySelector('.tfa-dots li:first-child').setAttribute('data-is-active', true);

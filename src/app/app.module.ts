@@ -4,6 +4,9 @@ import {BrowserModule} from '@angular/platform-browser';
 import {AppComponent} from './app.component';
 import {AppRoutingModule} from './app-routing.module';
 import {SettingsComponent} from './Views/settings/settings.component';
+import {SettingsAboutComponent} from "./Views/settings/about/settings.about.component";
+import {SettingsAccountComponent} from "./Views/settings/account/settings.account.component";
+import {SettingsAppearanceComponent} from "./Views/settings/appearance/settings.appearance.component";
 import {AccountsComponent} from './Views/accounts/accounts.component';
 import {OtpDisplayerComponent} from './Views/otpdisplayer/otpdisplayer.component';
 import {TokenInterceptorService} from "./Interceptors/token-interceptor.service";
@@ -22,6 +25,10 @@ import {ServiceWorkerService} from "./Services/serviceworker/serviceworker.servi
 import {AuthComponent} from './Views/auth/auth.component';
 import {LoaderComponent} from "./Components/loader/loader.component";
 import {LoaderService} from "./Services/loader/loader.service";
+import {AutoFocusDirective} from "./Directives/auto-focus.directive";
+import {NgOptimizedImage} from "@angular/common";
+import {SwMessageType} from "./Models/message";
+
 
 /**
  * Make sure that we have loaded all settings from storage before the app loads
@@ -33,8 +40,8 @@ function initializeApp(service: InitializerService): Function {
 }
 
 @NgModule({
-  declarations: [AppComponent, SettingsComponent, AccountsComponent, OtpDisplayerComponent, NotificationComponent, AuthComponent, LoaderComponent],
-  imports: [AppRoutingModule, BrowserModule, HttpClientModule, FormsModule, FontAwesomeModule ],
+  declarations: [AppComponent, SettingsComponent, SettingsAboutComponent, SettingsAccountComponent, SettingsAppearanceComponent, AccountsComponent, OtpDisplayerComponent, NotificationComponent, AuthComponent, LoaderComponent],
+  imports: [AppRoutingModule, BrowserModule, HttpClientModule, FormsModule, FontAwesomeModule, AutoFocusDirective, NgOptimizedImage],
   providers: [
     {provide: APP_INITIALIZER, useFactory: initializeApp, deps: [InitializerService], multi: true},
     {provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true,},

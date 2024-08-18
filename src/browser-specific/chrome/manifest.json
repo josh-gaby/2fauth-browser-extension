@@ -9,7 +9,7 @@
     "storage",
     "unlimitedStorage"
   ],
-  "version": "2024.3.3",
+  "version": "2024.7.1",
   "action": {
     "default_popup": "index.html"
   },

@@ -47,16 +47,14 @@ export class StorageService {
           () => resolve(true),
           () => resolve(false)
         );
+      } else if (this.storeType !== StorageType.sessionStorage) {
+        // Put the object into localStorage
+        localStorage.setItem(this.storeKey, JSON.stringify(data));
+        resolve(true);
       } else {
-        if  (this.storeType !== StorageType.sessionStorage) {
-          // Put the object into localStorage
-          localStorage.setItem(this.storeKey, JSON.stringify(data));
-          resolve(true);
-        } else {
-          // Put the object into sessionStorage
-          sessionStorage.setItem(this.storeKey, JSON.stringify(data));
-          resolve(true);
-        }
+        // Put the object into sessionStorage
+        sessionStorage.setItem(this.storeKey, JSON.stringify(data));
+        resolve(true);
       }
     });
   }
@@ -75,16 +73,14 @@ export class StorageService {
           console.error(error);
           reject();
         });
+      } else if (this.storeType !== StorageType.sessionStorage) {
+        // Get from localStorage
+        let object = (localStorage.getItem(this.storeKey) === null) ? this.data : JSON.parse(localStorage.getItem(this.storeKey) || '[]');
+        resolve(object);
       } else {
-        if (this.storeType !== StorageType.sessionStorage) {
-          // Get from localStorage
-          let object =  (localStorage.getItem(this.storeKey) === null) ? this.data : JSON.parse(localStorage.getItem(this.storeKey) || '[]');
-          resolve(object);
-        } else {
-          // Get from sessionStorage
-          let object =  (sessionStorage.getItem(this.storeKey) === null) ? this.data : JSON.parse(sessionStorage.getItem(this.storeKey) || '[]');
-          resolve(object);
-        }
+        // Get from sessionStorage
+        let object = (sessionStorage.getItem(this.storeKey) === null) ? this.data : JSON.parse(sessionStorage.getItem(this.storeKey) || '[]');
+        resolve(object);
       }
     });
   }
@@ -92,8 +88,8 @@ export class StorageService {
   /**
    * Check if two objects are equal
    *
-   * @param o1
-   * @param o2
+   * @param x
+   * @param y
    * @protected
    */
   protected deepEqual(x: any, y: any): boolean {
@@ -116,16 +112,14 @@ export class StorageService {
           console.error(error);
           resolve(false);
         });
+      } else if (this.storeType !== StorageType.sessionStorage) {
+        // Clear localStorage
+        localStorage.clear();
+        resolve(true);
       } else {
-        if (this.storeType !== StorageType.sessionStorage) {
-          // Clear localStorage
-          localStorage.clear();
-          resolve(true);
-        } else {
-          // Clear sessionStorage
-          sessionStorage.clear();
-          resolve(true);
-        }
+        // Clear sessionStorage
+        sessionStorage.clear();
+        resolve(true);
       }
     });
   }
@@ -142,14 +136,12 @@ export class StorageService {
           console.error(error);
           resolve(false);
         });
+      } else if (this.storeType !== StorageType.sessionStorage) {
+        localStorage.removeItem(key);
+        resolve(true);
       } else {
-        if (this.storeType !== StorageType.sessionStorage) {
-          localStorage.removeItem(key);
-          resolve(true);
-        } else {
-          sessionStorage.removeItem(key);
-          resolve(true);
-        }
+        sessionStorage.removeItem(key);
+        resolve(true);
       }
     });
   }

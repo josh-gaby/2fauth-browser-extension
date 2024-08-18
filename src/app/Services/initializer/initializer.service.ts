@@ -46,10 +46,10 @@ export class InitializerService {
       this.settings.set('decoded_pat', response.data.pat);
       if (!this.settings.get("host_url") || !this.settings.get("host_pat")) {
         // Missing the host URL or PAT, display the settings page so that they can be entered
-        this.router.navigate(['/settings'], {state: {data: {disable_back: true}}});
+        this.router.navigate(['/settings/account'], {state: {data: {disable_back: true}}});
       } else if (this.api.invalid_token) {
         this.notifier.error("Invalid Personal Access Token", 3000);
-        this.router.navigate(['/settings'], {state: {data: {disable_back: true}}});
+        this.router.navigate(['/settings/account'], {state: {data: {disable_back: true}}});
       } else {
         // Load the current user preferences from the server
         this.preferences.updateFromServer();

@@ -1,11 +1,13 @@
 const APP_STORE_KEY = '2fauth-app-settings',
-  KEY_STORE_KEY = '2fauth-enc-key',
   ENC_STORE_KEY = '2fauth-enc-details',
   STATE_STORE_KEY = '2fauth-state',
+  DEBUG_STORE_KEY = '2fauth-debug',
   decoder = new TextDecoder(),
   encoder = new TextEncoder(),
   _browser = (typeof browser === "undefined") ? chrome : browser,
   _crypto = (typeof window === "undefined") ? crypto : window.crypto,
+  enc_key = null,
+  enable_debug = null,
   default_state = {
     loaded: false,
     locked: true,
@@ -22,15 +24,28 @@ let ext_client,
     },
     state = {...default_state};
 
-
 _browser.windows.onRemoved.addListener(handleBrowserClosed);
 _browser.runtime.onStartup.addListener(handleStartup);
-_browser.runtime.onInstalled.addListener(handleStartup);
+_browser.runtime.onInstalled.addListener(handleUpdates);
 _browser.runtime.onSuspend.addListener(handleClose);
 _browser.runtime.onMessage.addListener(handleMessages);
 _browser.alarms.onAlarm.addListener(handleAlarms);
 _browser.idle.onStateChanged.addListener(handleSystemStateChange)
 _browser.runtime.onConnect.addListener(handleOnConnect);
+
+/**
+ * Debug logging
+ *
+ * @param logs
+ */
+async function log(...logs) {
+  if (this.enable_debug === null) {
+    this.enable_debug = (await _browser.storage.local.get(DEBUG_STORE_KEY))[DEBUG_STORE_KEY];
+  }
+  if (this.enable_debug) {
+    console.log('[2FAuth-SW]', ...logs);
+  }
+}
 
 /**
  * Detect all browser windows closing and lock extension if required
@@ -54,6 +69,7 @@ function handleBrowserClosed(window_id) {
  */
 function handleMessages(message, sender, response) {
   const message_type = message.type ? message.type : undefined;
+  this.log('Got command', message_type);
   switch (message_type) {
     case 'GET-PAT':
       getPat().then(data => response(data));
@@ -78,6 +94,12 @@ function handleMessages(message, sender, response) {
       break;
     case 'RESET-EXT':
       resetExt().then(data => response(data));
+      break;
+    case 'SET-DEBUG':
+      this.enable_debug = message.payload === 'ON';
+      _browser.storage.local.set({[DEBUG_STORE_KEY]: this.enable_debug}).then(() => {
+        response({status: true, debug_mode: this.enable_debug})
+      });
       break;
   }
 
@@ -139,6 +161,21 @@ function handleStartup() {
       lockNow();
     }
   });
+}
+
+/**
+ * Handle update tasks
+ */
+async function handleUpdates(details) {
+  if (details.reason === 'update') {
+    const prev_version = parseInt(details.previousVersion.replace('.', ''));
+    if (prev_version === 202450) {
+      // Remove the now unused '2fauth-enc-key' storage item.
+      console.log("Removing old 2fauth-enc-key stored value...");
+      await _browser.storage.local.remove('2fauth-enc-key');
+    }
+  }
+  handleStartup();
 }
 
 /**
@@ -214,6 +251,7 @@ function loadState() {
  * @returns {Promise<boolean>}
  */
 function loadDefaultState() {
+  this.log('Loading default state');
   state = {...default_state};
   state.lock_type = null;
   return _browser.storage.local.get({[APP_STORE_KEY]: null}).then(settings => {
@@ -238,14 +276,14 @@ function loadDefaultState() {
  * Lock the extension
  */
 function lockNow() {
+  this.log('Locking extension');
   state.locked = true;
   state.pat = '';
   storeState().then(() => {
     // Clear the encryption key
-    _browser.storage.local.set({[KEY_STORE_KEY]: null}).then(() => {
-      // Clear the alarm so it doesn't fire again
-      _browser.alarms.clear('lock-extension');
-    })
+    this.enc_key = null;
+    // Clear the alarm so it doesn't fire again
+    _browser.alarms.clear('lock-extension');
   })
 }
 
@@ -287,15 +325,7 @@ function isLocked() {
         enc_details.default = details[ENC_STORE_KEY].default ?? true;
         return new Promise(resolve => resolve())
       } else {
-        enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
-        enc_details.salt = _crypto.getRandomValues(new Uint8Array(16));
-        enc_details.default = true;
-        // Store the generated salt + iv (the iv is re-generated every time the pat is encrypted)
-        return _browser.storage.local.set({
-          [ENC_STORE_KEY]: {
-            iv: Array.apply(null, new Uint8Array(enc_details.iv)), salt: Array.apply(null, new Uint8Array(enc_details.salt)), default: enc_details.default
-          }
-        });
+        return this.generateEncDetails(true);
       }
     }, () => new Promise(resolve => resolve()));
   }).then(() => {
@@ -327,6 +357,7 @@ function isLocked() {
  * @returns {Promise<unknown>}
  */
 function resetExt() {
+  this.log('Resetting extension');
   enc_details = {
     salt: null, iv: null, default: true
   };
@@ -343,8 +374,10 @@ function resetExt() {
  * @returns {Promise<{[p: string]: any} | {status: boolean}>}
  */
 function unlockExt() {
+  this.log('Unlocking extension')
   return _browser.storage.local.get({[APP_STORE_KEY]: {}}).then(settings => {
     if (!settings || settings.hasOwnProperty(APP_STORE_KEY) === false) {
+      this.log('  failed (unlocking extension) - settings not loaded');
       return {status: true};
     }
     state.pat = settings[APP_STORE_KEY]['host_pat'] || '';
@@ -354,24 +387,30 @@ function unlockExt() {
           if (clear_text !== 'decryption error') {
             state.pat = clear_text;
             state.locked = false;
+            this.log('  done (unlocking extension)');
             return _browser.alarms.clear('lock-extension').then(() => {
               return {status: true}
             }, () => {
               return {status: true}
             });
           } else {
+            this.log('  failed (unlocking extension) - decryption error');
             return {status: false};
           }
         }, () => {
+          this.log('  failed  (unlocking extension) - decryption error');
           return {status: false}
         });
       }, () => {
+        this.log('  failed  (unlocking extension) - couldn\'t derive key');
         return {status: false}
       });
     }, () => {
+      this.log('  failed  (unlocking extension) - couldn\'t get password');
       return {status: false}
     });
   }, () => {
+    this.log('  failed  (unlocking extension) - failed to load settings');
     return {status: false}
   });
 }
@@ -380,14 +419,15 @@ function unlockExt() {
  * Set the encryption key to be used by unlockExt
  *
  * @param key
- * @returns {Promise<{status: boolean} | {status: boolean}>}
+ * @returns {Promise<{status: boolean}>}
  */
 function setEncKey(key) {
-  return _browser.storage.local.set({[KEY_STORE_KEY]: key}).then(() => {
-    return {status: true}
-  }, () => {
-    return {status: false}
-  });
+  this.log('Setting enc key');
+  this.log('  incoming key length = '+key.length);
+  this.enc_key = key;
+  this.log('  stored key length = '+this.enc_key.length);
+  this.log('  done (setting enc key)');
+  return Promise.resolve({status: true});
 }
 
 /**
@@ -396,7 +436,36 @@ function setEncKey(key) {
  * @returns {Promise<{[p: string]: any}>}
  */
 function getEncKey() {
-  return _browser.storage.local.get({[KEY_STORE_KEY]: null}).then(key_data => key_data[KEY_STORE_KEY], () => null);
+  return Promise.resolve(this.enc_key);
+}
+
+/**
+ * Generate new encryption iv + salt
+ *
+ * @param set_default
+ * @returns {Promise<void>}
+ */
+function generateEncDetails(set_default = false) {
+  this.log('Generating new encryption iv + salt');
+  enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
+  enc_details.salt = _crypto.getRandomValues(new Uint8Array(16));
+  if (set_default) {
+    enc_details.default = true;
+  }
+  // Store the generated salt + iv (the iv is re-generated every time the pat is encrypted)
+  return _browser.storage.local.set({
+    [ENC_STORE_KEY]: {
+      iv: Array(...new Uint8Array(enc_details.iv)),
+      salt: Array(...new Uint8Array(enc_details.salt)),
+      default: enc_details.default
+    }
+  }).then(data => {
+    this.log('  done (generating new encryption iv + salt)');
+    return data;
+  }, data => {
+    this.log('  failed (generating new encryption iv + salt)');
+    return data;
+  });
 }
 
 /**
@@ -406,9 +475,18 @@ function getEncKey() {
  * @returns {Promise<* | {host_pat: null, status: boolean}>}
  */
 function changeEncKey(key) {
-  return this.setEncKey(key).then(() => this.encryptPat(state.pat), () => {
-    return {status: false, host_pat: null}
-  });
+  this.log('Changing the password');
+  return this.generateEncDetails().then(
+    () => this.setEncKey(key)).then(
+      () => {
+        this.log('  done (changing the password)');
+        return this.encryptPat(state.pat)
+      },
+      () => {
+        this.log('  failed (changing the password)');
+        return {status: false, host_pat: null}
+      }
+    );
 }
 
 /**
@@ -419,6 +497,7 @@ function changeEncKey(key) {
  * @returns {Promise<Awaited<string>>|Promise<T | string>}
  */
 function decryptPat(cipher_text, enc_key) {
+  this.log('Decrypting PAT');
   const failed_promise = Promise.resolve('decryption error');
   if (enc_key && cipher_text) {
     try {
@@ -426,16 +505,21 @@ function decryptPat(cipher_text, enc_key) {
         name: "AES-GCM", iv: enc_details.iv
       }, enc_key, new Uint8Array(cipher_text)).then(decoded_buffer => {
         try {
-          return decoder.decode(new Uint8Array(decoded_buffer));
+          const decoded = decoder.decode(new Uint8Array(decoded_buffer));
+          this.log('  done (decrypting pat)');
+          return decoded;
         } catch (e) {
+          this.log('  failed (decrypting pat)', e);
           return failed_promise
         }
       }, () => failed_promise);
     } catch (e) {
+      this.log('  failed (decrypting pat)', e);
       return failed_promise
     }
   }
 
+  this.log('  failed (decrypting pat)', 'missing password or cipher_text');
   return failed_promise
 }
 
@@ -447,6 +531,7 @@ function decryptPat(cipher_text, enc_key) {
  * @returns {Promise<CryptoKey>}
  */
 function deriveKey(key, salt) {
+  this.log('Deriving encryption key');
   return _crypto.subtle.importKey("raw", encoder.encode(key), "PBKDF2", false, ["deriveBits", "deriveKey"]).then(
     key_material => {
       return _crypto.subtle.deriveKey({
@@ -455,7 +540,13 @@ function deriveKey(key, salt) {
         name: "AES-GCM", length: 256
       }, true, ["encrypt", "decrypt"]);
     }
-  );
+  ).then(data => {
+    this.log('  done (deriving encryption key)');
+    return data;
+  }, data => {
+    this.log('  failed (deriving encryption key)');
+    return data;
+  }) ;
 }
 
 /**
@@ -465,32 +556,40 @@ function deriveKey(key, salt) {
  * @returns {Promise<{[p: string]: any}>}
  */
 function encryptPat(pat_clear) {
-  return _browser.storage.local.get({[KEY_STORE_KEY]: null}).then(details => {
-    try {
-      if (details && details.hasOwnProperty(KEY_STORE_KEY)) {
-        return deriveKey(details[KEY_STORE_KEY], enc_details.salt).then(enc_key => {
-          enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
-          enc_details.default = details[KEY_STORE_KEY] === null;
-          return _browser.storage.local.set({
-            [ENC_STORE_KEY]: {
-              iv: Array.apply(null, new Uint8Array(enc_details.iv)), salt: Array.apply(null, new Uint8Array(enc_details.salt)), default: enc_details.default
-            }
-          }).then(() => {
-            return _crypto.subtle.encrypt({
-              name: "AES-GCM", iv: enc_details.iv
-            }, enc_key, encoder.encode(pat_clear).buffer).then(ciphertext => {
-              return {status: true, host_pat: Array.apply(null, new Uint8Array(ciphertext))}
-            }, () => {
-              return {status: false, host_pat: null};
-            });
+  try {
+    this.log('Encrypting PAT');
+      return deriveKey(this.enc_key, enc_details.salt).then(enc_key => {
+        this.log('  Regenerating encryption iv...');
+        enc_details.iv = _crypto.getRandomValues(new Uint8Array(12));
+        enc_details.default = this.enc_key === null;
+        return _browser.storage.local.set({
+          [ENC_STORE_KEY]: {
+            iv: Array(...new Uint8Array(enc_details.iv)),
+            salt: Array(...new Uint8Array(enc_details.salt)),
+            default: enc_details.default
+          }
+        }).then(() => {
+          this.log('  done (regenerating encryption iv)');
+          this.log('  Encrypting...');
+          return _crypto.subtle.encrypt({
+            name: "AES-GCM", iv: enc_details.iv
+          }, enc_key, encoder.encode(pat_clear).buffer).then(ciphertext => {
+            this.log('  done (encrypting)');
+            return {status: true, host_pat: Array(...new Uint8Array(ciphertext))}
+          }, () => {
+            this.log('  failed (encrypting)');
+            return {status: false, host_pat: null};
           });
+        }, () => {
+          this.log('  failed (encrypting)');
+          return {status: false, host_pat: null};
         });
-      }
-    } catch (e) {
-      // Do nothing
-    }
-    return {status: false, host_pat: null};
-  });
+      });
+  } catch (e) {
+    this.log('  failed (regenerating encryption iv)', e);
+    // Do nothing
+  }
+  return Promise.resolve({status: false, host_pat: null});
 }
 
 /**
