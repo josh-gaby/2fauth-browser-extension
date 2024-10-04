@@ -37,7 +37,7 @@
     </div>
   </div>
   <div class="tfa-loading" *ngIf="accounts_cache.data?.length === 0 && !is_searching">
-    <fa-icon class="tfa-text" [icon]="faSpinner" [spin]="true"></fa-icon>
+    <fa-icon class="tfa-text" [icon]="faSpinner" [animation]="'spin'"></fa-icon>
     Loading
   </div>
   <div class="tfa-loading" *ngIf="filtered_accounts.length === 0 && is_searching">
