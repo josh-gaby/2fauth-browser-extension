@@ -1,3 +1,8 @@
+
+# DEPRECATED
+Replaced by the official 2FAuth extension [here](https://github.com/Bubka/2FAuth-WebExtension)
+
+
 # 2FAuth Browser Extension
 
 A Firefox/Chrome extension built in [Angular](https://angular.io/) for the awesome self-hosted [2FAuth](https://github.com/Bubka/2FAuth) project by [Bubka](https://github.com/Bubka).
